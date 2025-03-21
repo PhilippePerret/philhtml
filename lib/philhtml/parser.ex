@@ -54,7 +54,7 @@ defmodule PhilHtml.Parser do
   end
 
   @reg_sections_raw_phil  ~r/^(raw)\:(.+)\:raw/Usm
-  @reg_code_inline_phil   ~r/(`)(.+)`/U
+  # @reg_code_inline_phil   ~r/(`)(.+)`/U <== NON, ÇA CASSE LA LIGNE
   @reg_sections_heex_phil ~r/(<\%)\=(.+)\%>/U
   @reg_sections_raw_html  ~r/^<(pre)>(<code(?:.+)<\/code>)<\/pre>/Usm
   @reg_sections_code_html ~r/<(code)>(.+)<\/code>/U
@@ -69,7 +69,7 @@ defmodule PhilHtml.Parser do
   @return [metadata, content{list}, options]
   """
   def dispatch_phil_content([content, options]) do
-    dispatch_content([content, options], [@reg_sections_raw_phil, @reg_code_inline_phil, @reg_sections_heex_phil])
+    dispatch_content([content, options], [@reg_sections_raw_phil, @reg_sections_heex_phil])
   end
 
   def dispatch_html_content([content, options]) do
@@ -95,7 +95,7 @@ defmodule PhilHtml.Parser do
       |> Enum.reduce(accu, fn [tout, type, code], collector ->
         type = case type do
           "<%"  -> :heex
-          "`"   -> :code
+          "`"   -> :code # NON, ÇA CASSE LA LIGNE
           _ -> String.to_atom(type)
         end
         section = %{type: type, content: String.trim(code)}
