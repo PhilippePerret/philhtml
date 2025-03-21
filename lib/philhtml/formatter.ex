@@ -8,14 +8,22 @@ defmodule PhilHtml.Formatter do
   @return {:ok|:error, rien|erreur}
   @public
   """
-  def formate(data_path, options) do
-    IO.puts "-> formate(#{inspect data_path}, #{inspect options})"
-    html_code = 
-    File.read!(data_path[:src])
+  def formate(phil_code, options) do
+    phil_code
     |> Parser.parse(options) # => {:original_content, :metadata}
     |> IO.inspect(label: "\n\n[pour code html.heex] APRÈS PARSE")
     |> formate()
     |> IO.inspect(label: "\n\nCODE HTML.HEEX FINAL")
+  end
+
+  @doc """
+  Fonction de formatage principal quand un fichier est fourni.
+  @return :ok si tout s'est bien passé et {:error, erreur} en cas de
+  problème.
+  """
+  def file_formate(data_path, options \\ []) do
+    IO.puts "-> formate(#{inspect data_path}, #{inspect options})"
+    html_code = formate(File.read!(data_path[:src]), options)
     File.write(data_path[:dst], html_code)
   end
 

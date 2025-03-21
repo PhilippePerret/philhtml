@@ -6,20 +6,36 @@ defmodule PhilHtml do
   alias PhilHtml.{Formatter, Evaluator}
 
   @doc """
-  @main
+  @main (code fourni)
+
+  Formatage du code fourni en argument.
+
+  @return {HTMLString} Le code formaté, évalué.
+  """
+  def to_html(code, options \\ [])
+  def to_html(phil_code) when is_binary(phil_code) do
+    to_html(%{html: phil_code})
+  end
+  def to_html(%{html: phil_code}, options) do
+    phil_code
+    |> load_or_formate_path(options) # => Map contenant :html
+    |> Evaluator.evaluate(options)
+  end
+  
+  @doc """
+  @main (avec un fichier)
   Convertit le path +phil_path+ en pur HTML et le retourne pour affichage.
-
-  ## Examples
-
+  
   @params {String} philpath Le chemin d'accès, .phil ou .html
   @params {Wordlist} options Des options
+
+  @return {HTMLString} Le code à afficher
   """
-  def to_html(philpath, options \\ []) do
-    IO.puts "-> PhilHtml.to_html(#{philpath})"
+  def file_to_html(philpath, options \\ []) do
+    IO.puts "-> PhilHtml.file_to_html(#{philpath})"
     philpath
     |> treate_path() # => [src: .phil path, dst: .html path, update: true/false]
-    |> load_or_formate_path(options) # => Map contenant :html_code
-    |> Evaluator.evaluate(options)
+
   end
 
   @doc """
@@ -42,7 +58,6 @@ defmodule PhilHtml do
     dst_date = dst_exists && mtime(dst_path) || nil
     src_date = src_exists && mtime(src_path) || nil
 
-    dst_exists = false # pour forcer chaque fois la reconstruction (développement)
     [
       src: src_path,
       dst: dst_path,
@@ -52,7 +67,7 @@ defmodule PhilHtml do
 
   def load_or_formate_path(data_path, options) do
     if data_path[:update] do
-      case Formatter.formate(data_path, options) do
+      case Formatter.file_formate(data_path, options) do
       :ok -> true
       {:error, erreur} -> raise erreur
       end

@@ -64,20 +64,5 @@ defmodule PhilHtml.ParseTest do
     assert(actual == expected)
   end 
 
-  test "deux codes en ligne font bien 2 codes en ligne" do
-    source = """
-    Un `code` et un `autre code`.
-    """
-    actual = Parser.parse(source, [])
-    expected = [
-      [{:string, "Un $PHILHTML0$ et un $PHILHTML1$.", [
-        {:code, "code"}, {:code, "autre code"}
-      ]}],
-      [metadata: []]
-    ]
-    assert(actual == expected)
-  end
-
-
 
 end

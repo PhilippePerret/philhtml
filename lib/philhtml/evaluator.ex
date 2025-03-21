@@ -13,6 +13,8 @@ defmodule PhilHtml.Evaluator do
   @doc """
   Méthode principale évaluant les <%= ... %> dans le code formaté.
 
+  @return {HTMLString} Le code HTML final, tel qu'il doit être envoyé
+  au navigateur client.
   """
   def evaluate(%{html: html} = data, options) when is_map(data) do
 

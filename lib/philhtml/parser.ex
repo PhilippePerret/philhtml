@@ -139,6 +139,20 @@ defmodule PhilHtml.Parser do
   Fonction qui reçoit le string +content+ d'un code à formater et
   met de côté les codes en ligne
 
+  ## Examples
+
+    iex> Parser.parse_raw_code_inline("simple string")
+    {:string, "simple string", []}
+
+    iex> Parser.parse_raw_code_inline("String avec `code`.")
+    {:string, "String avec $PHILHTML0$.", [{:code, "code"}]}
+
+    iex> Parser.parse_raw_code_inline("`code``autre code`")
+    {:string, "$PHILHTML0$$PHILHTML1$", [{:code, "code"}, {:code, "autre code"}]}
+
+    iex> Parser.parse_raw_code_inline("String avec <%= heex_code %>.")
+    {:string, "String avec $PHILHTML0$.", [{:heex, "heex_code"}]}
+
   @return un tuplet {:string, {String} content, {List} raws} où 
   +content+ est le contenu avec des $PHILHTML<x>$ à la place des
   code en ligne et +raws+ est une liste de tuplet contenant des
