@@ -20,7 +20,7 @@ defmodule PhilHtml.Parser do
     phil_content
     |> split_front_matter(options)
     |> front_matter_to_metadata(options)
-    |> dispatch_content() # =>  [content_splitted, options (avec metadata)]
+    |> dispatch_phil_content() # =>  [content_splitted, options (avec metadata)]
   end
 
 
@@ -53,30 +53,52 @@ defmodule PhilHtml.Parser do
     # |> IO.inspect(label: "Fin de découpe")
   end
 
-  @reg_sections_raw ~r/^(raw|code)\:(.+)\:\1/m
+  @reg_sections_raw_phil ~r/^(raw|code)\:(.+)\:\1/Usm
+  @reg_sections_raw_html ~r/^<(pre)>(<code(?:.+)<\/code>)<\/pre>/Usm
+  @reg_sections_code_html ~r/<(code)>(.+)<\/code>/U
 
   @doc """
   Fonction qui prend le contenu du fichier .phil (hors front-matter) 
   et le découpe en portions de code à ne pas toucher et de code à
   formater.
 
-  Noter qu'au retour les options sont mise dans la liste principale.
+  Noter qu'au retour les options sont mises dans la liste principale.
 
   @return [metadata, content{list}, options]
   """
-  def dispatch_content([content, options]) do
+  def dispatch_phil_content([content, options]) do
+    dispatch_content([content, options], @reg_sections_raw_phil)
+  end
+
+  def dispatch_html_content([content, options]) do
+    dispatch_content([content, options], [@reg_sections_raw_html, @reg_sections_code_html])
+  end
+
+  def dispatch_content([content, options], regex) do
     # Pour être sûr d'avoir un texte au début et pas un code/raw
     content = "\n\n\n" <> content
-    
+
+    regexes = cond do
+      is_list(regex) -> regex
+      true -> [regex]
+    end
+
+
     data_content = 
-    Regex.scan(@reg_sections_raw, content)
-    |> Enum.reduce(%{content: content, sections: []}, fn [tout, type, code], collector ->
-      section = %{type: String.to_atom(type), content: String.trim(code)}
-      %{
-        content: String.replace(collector.content, tout, "$PHILSEP$"),
-        sections: collector.sections ++ [section]
-      }
+    Enum.reduce(regexes, %{content: content, sections: []}, fn regex, accu -> 
+      IO.inspect(accu.content, label: "\nContenu fourni au SCAN")
+      IO.inspect(regex, label: "Regexp")
+      Regex.scan(regex, accu.content)
+      |> IO.inspect(label: "[dispatch_content] Résultat du SCAN")
+      |> Enum.reduce(accu, fn [tout, type, code], collector ->
+        section = %{type: String.to_atom(type), content: String.trim(code)}
+        %{
+          content: String.replace(collector.content, tout, "$PHILSEP$"),
+          sections: collector.sections ++ [section]
+        }
+      end)
     end)
+    |> IO.inspect(label: "DATA CONTENT FINAL")
 
     sections = data_content.sections
     content  = data_content.content

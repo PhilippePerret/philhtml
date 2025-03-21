@@ -32,7 +32,7 @@ defmodule PhilHtml.Formatter do
     |> Enum.join("\n")
   end
 
-  def formate(:raw_code, section, options) do
+  def formate(:raw, section, options) do
     """
     <pre><code>
     #{section.content}
