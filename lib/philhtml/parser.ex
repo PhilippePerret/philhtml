@@ -45,7 +45,7 @@ defmodule PhilHtml.Parser do
       |> String.split("\n")
       |> Enum.map(fn line -> 
         [var, value] = String.split(line, "=") |> Enum.map(fn s -> String.trim(s) end)
-        {String.to_atom(var), value}
+        {String.to_atom(var), StringTo.value(value)}
       end)
     end
     options = Keyword.put(options, :metadata, metadata)
@@ -54,8 +54,8 @@ defmodule PhilHtml.Parser do
   end
 
   @reg_sections_raw_phil  ~r/^(raw)\:(.+)\:raw/Usm
-  # @reg_code_inline_phil   ~r/(`)(.+)`/U <== NON, ÇA CASSE LA LIGNE
-  @reg_sections_heex_phil ~r/(<\%)\=(.+)\%>/U
+  @reg_code_inline_phil   ~r/`(.+)`/U
+  @reg_sections_heex_phil ~r/<\%\=(.+)\%>/U
   @reg_sections_raw_html  ~r/^<(pre)>(<code(?:.+)<\/code>)<\/pre>/Usm
   @reg_sections_code_html ~r/<(code)>(.+)<\/code>/U
 
@@ -69,7 +69,7 @@ defmodule PhilHtml.Parser do
   @return [metadata, content{list}, options]
   """
   def dispatch_phil_content([content, options]) do
-    dispatch_content([content, options], [@reg_sections_raw_phil, @reg_sections_heex_phil])
+    dispatch_content([content, options], [@reg_sections_raw_phil])
   end
 
   def dispatch_html_content([content, options]) do
@@ -89,7 +89,7 @@ defmodule PhilHtml.Parser do
     data_content = 
     Enum.reduce(regexes, %{content: content, sections: []}, fn regex, accu -> 
       # IO.inspect(accu.content, label: "\nContenu fourni au SCAN")
-      IO.inspect(regex, label: "Regexp")
+      # IO.inspect(regex, label: "Regexp")
       Regex.scan(regex, accu.content)
       # |> IO.inspect(label: "[dispatch_content] Résultat du SCAN")
       |> Enum.reduce(accu, fn [tout, type, code], collector ->
@@ -98,7 +98,7 @@ defmodule PhilHtml.Parser do
           "`"   -> :code # NON, ÇA CASSE LA LIGNE
           _ -> String.to_atom(type)
         end
-        section = %{type: type, content: String.trim(code)}
+        section = {type, String.trim(code)}
         %{
           content: String.replace(collector.content, tout, "$PHILSEP-#{Enum.count(collector.sections)}$"),
           sections: collector.sections ++ [section]
@@ -113,24 +113,49 @@ defmodule PhilHtml.Parser do
     splited_content = 
     sections
     |> Enum.with_index()
-    |> Enum.reduce(content, fn {section, index}, collector ->
-      String.replace(collector, "\$PHILSEP-#{index}\$", "$PHILSEP$#{section.type}::#{section.content}$PHILSEP$")
+    |> Enum.reduce(content, fn {{type, content}, index}, collector ->
+      String.replace(collector, "\$PHILSEP-#{index}\$", "$PHILSEP$#{type}::#{content}$PHILSEP$")
     end)
     |> String.split("$PHILSEP$")
-    |> Enum.map(fn section -> 
-      if String.match?(section, ~r/^([a-z]+)::(.+)/) do
-        [type_section, content_section] = String.split(section, "::", [parts: 2, trim: true])
-        %{type: String.to_atom(type_section), content: content_section}
+    |> Enum.map(fn content -> 
+      content = String.trim(content)
+      if String.match?(content, ~r/^([a-z]+)::(.+)/) do
+        [type_section, content_section] = String.split(content, "::", [parts: 2, trim: true])
+        {String.to_atom(type_section), content_section, nil}
       else
-        %{type: :string, content: section}
+        parse_raw_code_inline(content) # => {:string, content, [...]}
+        
       end
     end)
-    |> Enum.filter(fn x -> 
-      not is_nil(x) and not ( x.content == "" )
+    |> Enum.filter(fn {type, content, raws} -> 
+      not is_nil(content) and not (content == "")
     end)
     # |> IO.inspect(label: "Final Splited Content")
 
     [splited_content, options]
+  end
+
+  @doc """
+  Fonction qui reçoit le string +content+ d'un code à formater et
+  met de côté les codes en ligne
+
+  @return un tuplet {:string, {String} content, {List} raws} où 
+  +content+ est le contenu avec des $PHILHTML<x>$ à la place des
+  code en ligne et +raws+ est une liste de tuplet contenant des
+    {:heex, code HEEX à évaluer au chargement}
+    {:code, code à évaluer à la compilation}
+  """
+  def parse_raw_code_inline(content) do
+    [{:heex, @reg_sections_heex_phil}, {:code, @reg_code_inline_phil}]
+    |> Enum.reduce({:string, content, []}, fn {typereg, regexpression}, collector ->
+      Regex.scan(regexpression, content)
+      |> Enum.reduce(collector, fn [tout, code], datacontent ->
+        {:string, content, raws} = datacontent
+        new_content = String.replace(content, tout, "$PHILHTML#{Enum.count(raws)}$")
+        new_raws    = raws ++ [{typereg, String.trim(code)}]
+        {:string, new_content, new_raws}
+      end)
+    end)
   end
 
 end
