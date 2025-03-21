@@ -53,8 +53,9 @@ defmodule PhilHtml.Parser do
     # |> IO.inspect(label: "Fin de découpe")
   end
 
-  @reg_sections_raw_phil ~r/^(raw|code)\:(.+)\:\1/Usm
-  @reg_sections_raw_html ~r/^<(pre)>(<code(?:.+)<\/code>)<\/pre>/Usm
+  @reg_sections_raw_phil  ~r/^(raw)\:(.+)\:raw/Usm
+  @reg_code_inline_phil   ~r/(`)(.+)`/U
+  @reg_sections_raw_html  ~r/^<(pre)>(<code(?:.+)<\/code>)<\/pre>/Usm
   @reg_sections_code_html ~r/<(code)>(.+)<\/code>/U
 
   @doc """
@@ -67,7 +68,7 @@ defmodule PhilHtml.Parser do
   @return [metadata, content{list}, options]
   """
   def dispatch_phil_content([content, options]) do
-    dispatch_content([content, options], @reg_sections_raw_phil)
+    dispatch_content([content, options], [@reg_sections_raw_phil, @reg_code_inline_phil])
   end
 
   def dispatch_html_content([content, options]) do
@@ -86,37 +87,43 @@ defmodule PhilHtml.Parser do
 
     data_content = 
     Enum.reduce(regexes, %{content: content, sections: []}, fn regex, accu -> 
-      IO.inspect(accu.content, label: "\nContenu fourni au SCAN")
+      # IO.inspect(accu.content, label: "\nContenu fourni au SCAN")
       IO.inspect(regex, label: "Regexp")
       Regex.scan(regex, accu.content)
-      |> IO.inspect(label: "[dispatch_content] Résultat du SCAN")
+      # |> IO.inspect(label: "[dispatch_content] Résultat du SCAN")
       |> Enum.reduce(accu, fn [tout, type, code], collector ->
+        type = if type == "`", do: "code", else: type
         section = %{type: String.to_atom(type), content: String.trim(code)}
         %{
-          content: String.replace(collector.content, tout, "$PHILSEP$"),
+          content: String.replace(collector.content, tout, "$PHILSEP-#{Enum.count(collector.sections)}$"),
           sections: collector.sections ++ [section]
         }
       end)
     end)
-    |> IO.inspect(label: "DATA CONTENT FINAL")
+    # |> IO.inspect(label: "DATA CONTENT FINAL")
 
     sections = data_content.sections
     content  = data_content.content
 
     splited_content = 
-    String.split(content, "\$PHILSEP\$")
+    sections
     |> Enum.with_index()
-    |> Enum.map(fn {section, index} -> 
-      [
-        %{type: :string, content: String.trim(section)},
-        Enum.at(sections, index)
-      ]
+    |> Enum.reduce(content, fn {section, index}, collector ->
+      String.replace(collector, "\$PHILSEP-#{index}\$", "$PHILSEP$#{section.type}::#{section.content}$PHILSEP$")
     end)
-    |> List.flatten()
+    |> String.split("$PHILSEP$")
+    |> Enum.map(fn section -> 
+      if String.match?(section, ~r/^([a-z]+)::(.+)/) do
+        [type_section, content_section] = String.split(section, "::", [parts: 2, trim: true])
+        %{type: String.to_atom(type_section), content: content_section}
+      else
+        %{type: :string, content: section}
+      end
+    end)
     |> Enum.filter(fn x -> 
       not is_nil(x) and not ( x.content == "" )
     end)
-    |> IO.inspect(label: "Final Splited Content")
+    # |> IO.inspect(label: "Final Splited Content")
 
     [splited_content, options]
   end

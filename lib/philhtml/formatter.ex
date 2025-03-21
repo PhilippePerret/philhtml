@@ -13,7 +13,9 @@ defmodule PhilHtml.Formatter do
     html_code = 
     File.read!(data_path[:src])
     |> Parser.parse(options) # => {:original_content, :metadata}
+    |> IO.inspect(label: "\n\n[pour code html.heex] APRÈS PARSE")
     |> formate()
+    |> IO.inspect(label: "\n\nCODE HTML.HEEX FINAL")
     File.write(data_path[:dst], html_code)
   end
 
@@ -37,6 +39,12 @@ defmodule PhilHtml.Formatter do
     <pre><code>
     #{section.content}
     </code></pre>
+    """
+  end
+
+  def formate(:code, section, options) do
+    """
+    <code>#{section.content}</code>
     """
   end
 

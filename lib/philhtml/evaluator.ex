@@ -22,6 +22,7 @@ defmodule PhilHtml.Evaluator do
 
     # On parse pour isoler les codes (ne pas les traiter)
     [sections, options] = Parser.dispatch_html_content([html, options])
+    IO.inspect(sections, label: "SECTIONS DANS ÉVALUATE")
 
     sections
     |> Enum.map(fn section -> 
