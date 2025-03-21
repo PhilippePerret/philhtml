@@ -55,6 +55,7 @@ defmodule PhilHtml.Parser do
 
   @reg_sections_raw_phil  ~r/^(raw)\:(.+)\:raw/Usm
   @reg_code_inline_phil   ~r/(`)(.+)`/U
+  @reg_sections_heex_phil ~r/(<\%)\=(.+)\%>/U
   @reg_sections_raw_html  ~r/^<(pre)>(<code(?:.+)<\/code>)<\/pre>/Usm
   @reg_sections_code_html ~r/<(code)>(.+)<\/code>/U
 
@@ -68,7 +69,7 @@ defmodule PhilHtml.Parser do
   @return [metadata, content{list}, options]
   """
   def dispatch_phil_content([content, options]) do
-    dispatch_content([content, options], [@reg_sections_raw_phil, @reg_code_inline_phil])
+    dispatch_content([content, options], [@reg_sections_raw_phil, @reg_code_inline_phil, @reg_sections_heex_phil])
   end
 
   def dispatch_html_content([content, options]) do
@@ -92,8 +93,12 @@ defmodule PhilHtml.Parser do
       Regex.scan(regex, accu.content)
       # |> IO.inspect(label: "[dispatch_content] Résultat du SCAN")
       |> Enum.reduce(accu, fn [tout, type, code], collector ->
-        type = if type == "`", do: "code", else: type
-        section = %{type: String.to_atom(type), content: String.trim(code)}
+        type = case type do
+          "<%"  -> :heex
+          "`"   -> :code
+          _ -> String.to_atom(type)
+        end
+        section = %{type: type, content: String.trim(code)}
         %{
           content: String.replace(collector.content, tout, "$PHILSEP-#{Enum.count(collector.sections)}$"),
           sections: collector.sections ++ [section]
