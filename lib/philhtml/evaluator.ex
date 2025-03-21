@@ -52,14 +52,13 @@ defmodule PhilHtml.Evaluator do
         evaluated_elixir
       else
         [_tout, fn_name, fn_params] = found_function
-        fn_name   = String.to_atom(fn_name)
-        fn_params = StringTo.list(fn_params)
-        arity     = Enum.count(fn_params)
+        dmodule = module_helper_for?(fn_name, fn_params, options)
         cond do
-          Kernel.function_exported?(PhilHtml.Helpers, fn_name, arity) ->
-            evaluate_in(PhilHtml.Helpers, fn_name, fn_params)
-          # TODO: voir aussi dans les modules fournis
-          true -> raise "Fonction inconnue : #{fn_name}/#{arity}"
+          is_nil(dmodule) -> 
+            raise "Fonction inconnue : #{fn_name}/#{Enum.count(StringTo.list(fn_params))}"
+          true -> 
+            [module, fn_name, fn_params] = dmodule
+            evaluate_in(module, fn_name, fn_params)
         end
 
       end
@@ -80,4 +79,41 @@ defmodule PhilHtml.Evaluator do
   def evaluate_in(module, fn_name, fn_params) do
     apply(module, fn_name, fn_params)
   end
+
+
+  @doc """
+  Cherche le module définissant la méthode +fn_name+ avec le
+  nombre de paramètres fournis.
+
+  @return [module, fn_name:atom, fn_params:list] ou nil
+  """
+  def  module_helper_for?(fn_name, fn_params, options) when is_binary(fn_name) do
+    module_helper_for?(String.to_atom(fn_name), fn_params, options)
+  end
+  def  module_helper_for?(fn_name, fn_params, options) when is_binary(fn_params) do
+    module_helper_for?(fn_name, StringTo.list(fn_params), options)
+  end
+  def module_helper_for?(fn_name, fn_params, options) do
+    arity  = Enum.count(fn_params)
+
+    # IO.inspect(fn_name, label: "fn_name")
+    # IO.inspect(fn_params, label: "fn_params")
+    # IO.inspect(arity, label: "arity")
+
+    # Liste de tous les modules
+    (Keyword.get(options, :helpers, []) ++ [PhilHtml.Helpers])
+    |> Enum.filter(fn module ->
+      cond do    
+        Kernel.function_exported?(module, fn_name, arity) -> true
+        true -> false
+      end
+      # |> IO.inspect(label: "Condition pour module #{module} #{inspect fn_name}/#{arity}")
+    end)
+    |> Enum.map(fn module ->
+      [module, fn_name, fn_params]
+    end)
+    |> Enum.at(0, nil)
+  end
+
+
 end

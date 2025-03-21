@@ -9,5 +9,5 @@ defmodule PhilHtml.Helpers do
     Constants.get(key)
   end
 
-  
+
 end

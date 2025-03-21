@@ -72,10 +72,13 @@ defmodule PhilHtml.Formatter do
   def evaluate_helpers_functions(code, options) do
     Regex.scan(@reg_helpers_functions, code)
     |> Enum.reduce(code, fn [tout, fn_name, fn_params], accu ->
-      # TODO Il faut faire un traitement plus fort : 
-      # 1) tester si la fonction existe dans un des modules fourni
-      # 2) l'appeler avec ce module.
-      rempl = Evaluator.evaluate_in(PhilHtml.Helpers, fn_name, fn_params)
+      rempl = 
+      case Evaluator.module_helper_for?(fn_name, fn_params, options) do
+        nil -> "fonction inconnue #{fn_name}"
+        tout -> 
+          [module, fn_name, fn_params] = tout
+          rempl = Evaluator.evaluate_in(module, fn_name, fn_params)
+      end
       String.replace(accu, tout, rempl)
     end)
   end
