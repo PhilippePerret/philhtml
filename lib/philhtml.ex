@@ -6,20 +6,26 @@ defmodule PhilHtml do
   alias PhilHtml.{Formatter, Evaluator}
 
   @doc """
-  Convertit le path +phil_path+ en HTML
+  @main
+  Convertit le path +phil_path+ en pur HTML et le retourne pour affichage.
 
   ## Examples
 
   @params {String} philpath Le chemin d'accès, .phil ou .html
   @params {Wordlist} options Des options
   """
-  def to_html(philpath, options) do
+  def to_html(philpath, options \\ []) do
+    IO.puts "-> PhilHtml.to_html(#{philpath})"
     philpath
     |> treate_path() # => [src: .phil path, dst: .html path, update: true/false]
     |> load_or_formate_path(options) # => Map contenant :html_code
     |> Evaluator.evaluate(options)
   end
 
+  @doc """
+
+  @return [:src, :dst, :update]
+  """
   def treate_path(path) do
     fext    = Path.extname(path) # .phil ou .html
     faffix  = Path.basename(path, fext)
@@ -35,6 +41,8 @@ defmodule PhilHtml do
 
     dst_date = dst_exists && mtime(dst_path) || nil
     src_date = src_exists && mtime(src_path) || nil
+
+    dst_exists = false # pour forcer chaque fois la reconstruction (développement)
     [
       src: src_path,
       dst: dst_path,
@@ -42,17 +50,21 @@ defmodule PhilHtml do
     ]
   end
 
+  def load_or_formate_path(data_path, options) do
+    if data_path[:update] do
+      case Formatter.formate(data_path, options) do
+      :ok -> true
+      {:error, erreur} -> raise erreur
+      end
+    end
+    %{ html: File.read!(data_path[:dst]) }
+  end
+
+
   defp mtime(path) do
     File.lstat!(path).mtime
     |> NaiveDateTime.from_erl!()
     |> DateTime.from_naive!("Etc/UTC")
-  end
-
-  def load_or_formate_path(data_path, options) do
-    if data_path[:update] do
-      Formatter.formate_path(data_path)
-    end
-    %{html_code: File.read!(data_path[:dst])}
   end
 
 end

@@ -4,11 +4,17 @@ defmodule PhilHtml.Evaluator do
   formaté
   """
 
+
+  @reg_heex_variable ~r/<\%\=(.+?)\%>/
+
+
   @doc """
   Méthode principale évaluant les <%= ... %> dans le code formaté.
-  
+
   """
-  def evaluate(%{html: html} = data, options) do
+  def evaluate(%{ :html => html} = data, options) do
     final_html = html
 
   end
+
+end
