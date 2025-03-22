@@ -24,7 +24,7 @@ defmodule PhilHtml.Evaluator do
 
     # On parse pour isoler les codes à ne pas traiter
     [sections, options] = Parser.dispatch_html_content([heex, options])
-    IO.inspect(sections, label: "SECTIONS DANS ÉVALUATE")
+    # IO.inspect(sections, label: "SECTIONS DANS ÉVALUATE")
 
     html = 
     sections
@@ -41,12 +41,12 @@ defmodule PhilHtml.Evaluator do
   end
 
   def evaluate_section(html, options) do
-    IO.inspect(html, label: "fourni à evaluate_section/2")
+    # IO.inspect(html, label: "fourni à evaluate_section/2")
     Regex.scan(@reg_heex_variable, html) 
-    |> IO.inspect(label: "Résultat du scan")
+    # |> IO.inspect(label: "Résultat du scan")
     |> Enum.reduce(html, fn [tout, elixir], collector ->
       elixir = String.trim(elixir)
-      IO.inspect(elixir, label: "Found")
+      # IO.inspect(elixir, label: "Found")
 
       found_function = Regex.run(~r/^([a-zA-Z_0-9\?]+)\((.+)\)$/U, elixir)
 

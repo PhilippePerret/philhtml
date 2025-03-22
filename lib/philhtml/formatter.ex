@@ -14,11 +14,12 @@ defmodule PhilHtml.Formatter do
   
   def formate(phtml) when is_struct(phtml, PhilHtml) do
     phtml
+    |> Compiler.pre_compile()
     |> Parser.parse()
-    |> IO.inspect(label: "\n\n[formate(phtml)] APRÈS PARSE")
+    # |> IO.inspect(label: "\n\n[formate(phtml)] APRÈS PARSE")
     |> formate_content()
-    |> IO.inspect(label: "\n\n[formate(phtml)] APRÈS Formatage du contenu")
-    |> Compiler.compile()
+    # |> IO.inspect(label: "\n\n[formate(phtml)] APRÈS formate_content")
+    |> Compiler.post_compile()
   end
 
   @doc """

@@ -25,26 +25,26 @@ defmodule PhilHtml do
   @doc """
   @main (code fourni)
 
-  Formatage du code fourni en argument.
+  Formatage du code fourni en argument (qui peut être le chemin
+  d'accès à un fichier).
 
   @return {HTMLString} Le code formaté, évalué.
   """
   def to_html(foo, options) when is_binary(foo) do
-    IO.puts "-> to_html avec un binaire et des options"
+    # IO.puts "-> to_html avec un binaire et des options"
     if File.exists?(foo) do
       file_to_html(foo, options)
     else
-      IO.puts "- ce n'est pas un fichier -"
       to_html(%PhilHtml{raw_content: foo, options: options})
     end
   end
 
   def to_html(foo) when is_binary(foo) do
-    IO.puts "-> to_html avec un binaire sans option"
+    # IO.puts "-> to_html avec un binaire sans option"
     to_html(foo, [])
   end
   def to_html(phtml) when is_struct(phtml, PhilHtml) do
-    IO.puts "-> to_html avec un phtml"
+    # IO.puts "-> to_html avec un phtml"
     phtml 
     |> Formatter.formate()
     |> Evaluator.evaluate()
@@ -62,11 +62,12 @@ defmodule PhilHtml do
   @return {HTMLString} Le code à afficher
   """
   def file_to_html(phtml)  when is_struct(phtml, PhilHtml) do
-    IO.puts "-> PhilHtml.to_html(#{inspect phtml})"
+    # IO.puts "-> PhilHtml.to_html(#{inspect phtml})"
     phtml
     |> treate_path()
     |> load_or_formate_path()
     |> Evaluator.evaluate()
+    |> Map.get(:html)
   end
 
   def file_to_html(philpath, options) when is_binary(philpath) do
@@ -97,14 +98,16 @@ defmodule PhilHtml do
     dst_date = dst_exists && mtime(dst_path) || nil
     src_date = src_exists && mtime(src_path) || nil
 
-    Map.put(phtml, :file, [
+    dfile = [
       src: src_path,
       dst: dst_path,
       require_update: not(dst_exists) or DateTime.after?(src_date, dst_date)
-    ])
+    ]
+    %{phtml | file: dfile}
   end
 
   def load_or_formate_path(phtml) when is_struct(phtml, PhilHtml) do
+    # IO.inspect(phtml, label: "Dans load_or_formate_path")
     if phtml.file[:require_update] do
       case Formatter.formate_file(phtml) do
       :ok -> true
@@ -113,7 +116,7 @@ defmodule PhilHtml do
         raise erreur # pour le moment
       end
     end
-    %{ phtml | raw_content: File.read!(phtml.file[:dst]) }
+    %{ phtml | heex: File.read!(phtml.file[:dst]) }
   end
 
 

@@ -23,18 +23,17 @@ defmodule PhilHtml.Parser do
   end
 
   def split_front_matter(phtml) when is_struct(phtml, PhilHtml) do
-    parts = String.split(phtml.raw_content, "---")
+    parts = String.split(String.trim(phtml.raw_content), "---")
     if Enum.count(parts) == 3 do
       # <= Il y a un front-matter
       # => On ne prend que les parties utiles
       [_rien | usefull_parts] = parts
       Map.merge(phtml, %{
         frontmatter:  Enum.at(usefull_parts, 0),
-        raw_body:     Enum.at(usefull_parts, 1)
+        body:         Enum.at(usefull_parts, 1),
+        raw_content:  Enum.at(usefull_parts, 1)
       })
-    else
-      %{phtml | raw_body: phtml.raw_content}
-    end
+    else phtml end
   end
 
   def front_matter_to_metadata(phtml) when is_struct(phtml, PhilHtml) do
