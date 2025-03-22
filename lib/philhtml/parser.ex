@@ -13,44 +13,43 @@ defmodule PhilHtml.Parser do
   – en extraire le front-matter
   - en séparer les codes à ne pas toucher des codes à formater
   - retourne le résultat pour traitement
-  @params {String} phil_content Le contenu complet du fichier .phil
-  @params {Keyword} options Liste des options
+  @params {PhilHtml} phtml Structure principale
   """
-  def parse(phil_content, options) when is_binary(phil_content) do
-    phil_content
-    |> split_front_matter(options)
-    |> front_matter_to_metadata(options)
-    |> dispatch_phil_content() # =>  [content_splitted, options (avec metadata)]
+  def parse(phtml) when is_struct(phtml, PhilHtml) do
+    phtml
+    |> split_front_matter()
+    |> front_matter_to_metadata()
+    |> explode_phil_content()
   end
 
-
-
-
-  def split_front_matter(str, options) do
-    parts = String.split(str, "---")
+  def split_front_matter(phtml) when is_struct(phtml, PhilHtml) do
+    parts = String.split(phtml.raw_content, "---")
     if Enum.count(parts) == 3 do
+      # <= Il y a un front-matter
+      # => On ne prend que les parties utiles
       [_rien | usefull_parts] = parts
-      usefull_parts
+      Map.merge(phtml, %{
+        frontmatter:  Enum.at(usefull_parts, 0),
+        raw_body:     Enum.at(usefull_parts, 1)
+      })
     else
-      [nil, str]
+      %{phtml | raw_body: phtml.raw_content}
     end
   end
 
-  def front_matter_to_metadata([frontmatter, content], options) do
+  def front_matter_to_metadata(phtml) when is_struct(phtml, PhilHtml) do
     metadata =
-    if is_nil(frontmatter) do
+    if is_nil(phtml.frontmatter) do
       []
     else
-      String.trim(frontmatter)
+      String.trim(phtml.frontmatter)
       |> String.split("\n")
       |> Enum.map(fn line -> 
         [var, value] = String.split(line, "=") |> Enum.map(fn s -> String.trim(s) end)
         {String.to_atom(var), StringTo.value(value)}
       end)
     end
-    options = Keyword.put(options, :metadata, metadata)
-    [String.trim(content), options]
-    # |> IO.inspect(label: "Fin de découpe")
+    %{ phtml | metadata: metadata}
   end
 
   @reg_sections_raw_phil  ~r/^(raw)\:(.+)\:raw/Usm
@@ -68,17 +67,23 @@ defmodule PhilHtml.Parser do
 
   @return [metadata, content{list}, options]
   """
-  def dispatch_phil_content([content, options]) do
-    dispatch_content([content, options], [@reg_sections_raw_phil])
+  def explode_phil_content(phtml) when is_struct(phtml, PhilHtml) do
+    [content, options] = explode_content([phtml.raw_content, phtml.options], [@reg_sections_raw_phil])
+    %{phtml | content: content}
   end
 
+  @doc """
+  Explosion du contenu mais quand c'est déjà du code HEEX et qu'on
+  doit seulement évaluer les codes heex.
+  """
   def dispatch_html_content([content, options]) do
-    dispatch_content([content, options], [@reg_sections_raw_html, @reg_sections_code_html])
+    explode_content([content, options], [@reg_sections_raw_html, @reg_sections_code_html])
   end
 
-  def dispatch_content([content, options], regex) do
-    # Pour être sûr d'avoir un texte au début et pas un code/raw
-    content = "\n\n\n" <> content
+  def explode_content([content, options], regex) do
+    # Pour être sûr d'avoir un texte au début, même lorsque le code 
+    # commence par une section :raw
+    content = "\n\n\n" <> String.trim(content)
 
     regexes = cond do
       is_list(regex) -> regex
@@ -91,7 +96,7 @@ defmodule PhilHtml.Parser do
       # IO.inspect(accu.content, label: "\nContenu fourni au SCAN")
       # IO.inspect(regex, label: "Regexp")
       Regex.scan(regex, accu.content)
-      # |> IO.inspect(label: "[dispatch_content] Résultat du SCAN")
+      # |> IO.inspect(label: "[explode_content] Résultat du SCAN")
       |> Enum.reduce(accu, fn [tout, type, code], collector ->
         type = case type do
           "<%"  -> :heex

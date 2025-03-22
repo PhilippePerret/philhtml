@@ -3,6 +3,23 @@ defmodule PhilHtml do
   Documentation for `PhilHtml`.
   """
 
+  defstruct [
+    file: [
+      src: nil,         # Le fichier .phil
+      dst: nil,         # Le fichier .html.heex
+      require_update: false
+      ],
+    options: nil, 
+    raw_content: nil, # Le code brut
+    frontmatter: nil, # Le frontmatter
+    raw_body:    nil, # Le code de corps brut
+    content: nil,     # Le contenu pendant le travail
+    heex:     nil,    # Le code formaté en HEEX
+    html:     nil,    # Le code final évalué
+    metadata: [],     # Les métadonnées
+    errors: [] # Les erreurs rencontrées
+  ]
+
   alias PhilHtml.{Formatter, Evaluator}
 
   @doc """
@@ -12,16 +29,24 @@ defmodule PhilHtml do
 
   @return {HTMLString} Le code formaté, évalué.
   """
-  def to_html(code, options \\ [])
-  def to_html(phil_code) when is_binary(phil_code) do
-    to_html(%{html: phil_code})
+  # def to_html(code, options \\ [])
+
+  def to_html(foo, options) when is_binary(foo) do
+    if File.exists?(foo) do
+      file_to_html(foo, options)
+    else
+      to_html(%PhilHtml{file: [src: foo], options: options, raw_content: foo})
+    end
   end
-  def to_html(%{html: phil_code}, options) do
-    phil_code
-    |> load_or_formate_path(options) # => Map contenant :html
-    |> Evaluator.evaluate(options)
+
+  def to_html(foo) when is_binary(foo) do
+    to_html(foo, [])
+  end
+  def to_html(phtml) when is_struct(phtml, PhilHtml) do
+    phtml.html
   end
   
+
   @doc """
   @main (avec un fichier)
   Convertit le path +phil_path+ en pur HTML et le retourne pour affichage.
@@ -31,19 +56,28 @@ defmodule PhilHtml do
 
   @return {HTMLString} Le code à afficher
   """
-  def file_to_html(philpath, options \\ []) do
-    IO.puts "-> PhilHtml.file_to_html(#{philpath})"
-    philpath
-    |> treate_path() # => [src: .phil path, dst: .html path, update: true/false]
+  def file_to_html(phtml)  when is_struct(phtml, PhilHtml) do
+    IO.puts "-> PhilHtml.to_html(#{inspect phtml})"
+    phtml
+    |> treate_path()
+    |> load_or_formate_path()
+    # |> Evaluator.evaluate()
+  end
 
+  def file_to_html(philpath, options) when is_binary(philpath) do
+    file_to_html(%PhilHtml{file: [src: philpath], options: options})
+  end
+  def file_to_html(philpath) when is_binary(philpath) do
+    file_to_html(philpath, [])
   end
 
   @doc """
 
   @return [:src, :dst, :update]
   """
-  def treate_path(path) do
-    fext    = Path.extname(path) # .phil ou .html
+  def treate_path(phtml) when is_struct(phtml, PhilHtml) do
+    path = phtml.file[:src]
+    fext    = Path.extname(path) # .phil (ou .html)
     faffix  = Path.basename(path, fext)
     folder  = Path.dirname(path)
 
@@ -58,21 +92,23 @@ defmodule PhilHtml do
     dst_date = dst_exists && mtime(dst_path) || nil
     src_date = src_exists && mtime(src_path) || nil
 
-    [
+    Map.put(phtml, :file, [
       src: src_path,
       dst: dst_path,
-      update: not(dst_exists) or DateTime.after?(src_date, dst_date)
-    ]
+      require_update: not(dst_exists) or DateTime.after?(src_date, dst_date)
+    ])
   end
 
-  def load_or_formate_path(data_path, options) do
-    if data_path[:update] do
-      case Formatter.file_formate(data_path, options) do
+  def load_or_formate_path(phtml) when is_struct(phtml, PhilHtml) do
+    if phtml.file[:require_update] do
+      case Formatter.formate_file(phtml) do
       :ok -> true
-      {:error, erreur} -> raise erreur
+      {:error, erreur} -> 
+        %{ phtml | errors: phtml.errors ++ erreur}
+        raise erreur # pour le moment
       end
     end
-    %{ html: File.read!(data_path[:dst]) }
+    %{ phtml | raw_content: File.read!(phtml.file[:dst]) }
   end
 
 

@@ -8,12 +8,17 @@ defmodule PhilHtml.Formatter do
   @return {:ok|:error, rien|erreur}
   @public
   """
-  def formate(phil_code, options) do
-    phil_code
-    |> Parser.parse(options) # => {:original_content, :metadata}
+  def formate(philcode, options) when is_binary(philcode) do
+    formate(%PhilHtml{raw_content: philcode, options: options})
+  end
+  
+  def formate(phtml) when is_struct(phtml, PhilHtml) do
+    phtml
+    |> Parser.parse()
     |> IO.inspect(label: "\n\n[pour code html.heex] APRÈS PARSE")
-    |> formate()
+    |> formate_content()
     |> IO.inspect(label: "\n\nCODE HTML.HEEX FINAL")
+    |> Compiler.compile()
   end
 
   @doc """
@@ -21,10 +26,10 @@ defmodule PhilHtml.Formatter do
   @return :ok si tout s'est bien passé et {:error, erreur} en cas de
   problème.
   """
-  def file_formate(data_path, options \\ []) do
-    IO.puts "-> formate(#{inspect data_path}, #{inspect options})"
-    html_code = formate(File.read!(data_path[:src]), options)
-    File.write(data_path[:dst], html_code)
+  def formate_file(phtml) when is_struct(phtml, PhilHtml) do
+    phtml = %{phtml | raw_content: File.read!(phtml.file[:src])}
+    phtml = formate(phtml)
+    File.write(phtml.file[:dst], phtml.heex)
   end
 
   @doc """
@@ -34,15 +39,15 @@ defmodule PhilHtml.Formatter do
 
   @return {HTMLString} Code html.heex de la page
   """
-  def formate([splited_content, options]) do
-    splited_content
+  def formate_content(phtml) do
+    phtml.content
     |> Enum.map(fn section ->
-      formate(section.type, section, options)
+      formate_section(section.type, section, phtml.options)
     end)
     |> Enum.join("\n")
   end
 
-  def formate(:raw, section, options) do
+  def formate_section(:raw, section, options) do
     """
     <pre><code>
     #{section.content}
@@ -50,19 +55,19 @@ defmodule PhilHtml.Formatter do
     """
   end
 
-  def formate(:code, section, options) do
+  def formate_section(:code, section, options) do
     """
     <code>#{section.content}</code>
     """
   end
 
-  def formate(:heex, section, options) do
+  def formate_section(:heex, section, options) do
     """
     <%= #{section.content} %>
     """
   end
 
-  def formate(:string, section, options) do
+  def formate_section(:string, section, options) do
     section.content
     |> build_as_html(options)
   end
