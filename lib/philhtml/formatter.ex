@@ -73,6 +73,10 @@ defmodule PhilHtml.Formatter do
   end
 
   def formate_section(:string, section, options) do
+    metadata = Keyword.get(options, :metadata, [])
+    options = if metadata[:default_tag] do
+      Keyword.put(options, :default_tag, metadata[:default_tag])
+    else options end
     section.content
     |> build_as_html(options)
   end
@@ -86,13 +90,31 @@ defmodule PhilHtml.Formatter do
   majuscules et des traits plats, suivi d'une parenthèse ouverte,
   des arguments et une parenthèse fermée — est une fonction définie
   dans un helper.
+
+  ## Examples
+      Note : les exemples utilise les helpers qui se trouvent dans le
+      dossier /test/fixtures/helpers/
+      
+      # Fonction commun (dans PhilHtml.Helpers)
+      iex> evaluate_helpers_functions("C'est mon p(chemin/acces) pour venir.", [])
+      ~s(C'est mon <span class="path">chemin/acces</span> pour venir.)
+
+      # Fonction personnelle (dans module personnel)
+      iex> evaluate_helpers_functions("mafonction()", [helpers: [HelperDeTest]])
+      ~s(Texte pour remplacer la fonction `mafonction/0')
+
+      # Fonction inconnue
+      iex> evaluate_helpers_functions("mafonctioninexistante()", [helpers: [HelperDeTest]])
+      ~s(<span class="error">Unknown function `mafonctioninexistante/0'</span>)
   """
   def evaluate_helpers_functions(code, options) do
     Regex.scan(@reg_helpers_functions, code)
     |> Enum.reduce(code, fn [tout, fn_name, fn_params], accu ->
       rempl = 
       case Evaluator.module_helper_for?(fn_name, fn_params, options) do
-        nil -> "fonction inconnue #{fn_name}"
+        nil -> 
+          arity = StringTo.list(fn_params) |> Enum.count()
+          ~s(<span class="error">Unknown function `#{fn_name}/#{arity}'</span>)
         tout -> 
           [module, fn_name, fn_params] = tout
           Evaluator.evaluate_in(module, fn_name, fn_params)
@@ -110,12 +132,26 @@ defmodule PhilHtml.Formatter do
     "s" => "section"
   }
 
-  @reg_amorce_attributes ~r/^([pdq]?)((?:[\.\#][a-zA-Z0-9_\-]+)+)?\:/
+  @reg_amorce_attributes ~r/^((?:[pdqs]|h[0-7])?)((?:[\.\#][a-zA-Z0-9_\-]+)+)?\:/
   @reg_amorce_et_texte   ~r/#{Regex.source(@reg_amorce_attributes)}(.+)$/
 
-  def build_as_html(content, options) do
+  @doc """
+  Construit le contenu, en se servant si nécessaire des options (et 
+  des métadonnées qui ont été ajoutées)
 
-    default_tag = Keyword.get(options, :default_tag, Keyword.get(options[:metadata], :default_tag, "p"))
+  ## Examples
+
+    iex> build_as_html("h1:Un titre de niveau 1\\nh2:Un titre de niveau 2")
+    ~s(<h1>Un titre de niveau 1</h1>\\n<h2>Un titre de niveau 2</h2>)
+
+    # Défaut
+    iex> build_as_html("p:Un paragraphe\\nd:Un divide\\nq:Une citation\\ns:Une section\\n:Un par défaut")
+    ~s(<p>Un paragraphe</p>\\n<div>Un divide</div>\\n<quote>Une citation</quote>\\n<section>Une section</section>\\n<p>Un par défaut</p>)
+
+  """
+  def build_as_html(content, options \\ [options: []]) do
+
+    default_tag = Keyword.get(options, :default_tag, "p")
 
     content
     |> treate_returns()
@@ -131,7 +167,7 @@ defmodule PhilHtml.Formatter do
         true ->
           scanner = Enum.at(scanner, 0)
           [_tout, tag, selectors, content] = scanner
-          tag = @smalltag_to_realtag[tag]
+          tag = @smalltag_to_realtag[tag] || tag
           selectors = extract_attributes_from(selectors)
           tag = tag == "" && "p" || tag
           ~s(<#{tag}#{selectors}>#{treate_content(content, options)}</#{tag}>)
@@ -153,19 +189,39 @@ defmodule PhilHtml.Formatter do
   end
 
 
-  # Le texte du fichier peut contenir des formatages tels que :
-  # 
-  #     p.class:
-  #       Ma ligne de texte
-  #       Mon autre ligne de texte
-  # 
-  # Il faut les reconstituer en :
-  # 
-  #     p.class: Ma ligne de texte
-  #     p.class: Mon autre ligne de texte
-  # 
   @reg_indented_format ~r/#{Regex.source(@reg_amorce_attributes)}(?:\n(?:\t|  )(?:.+))+/m
-  defp treate_returns(str) do
+
+  @doc """
+  Le texte du fichier peut contenir des formatages tels que :
+  
+    p.class:
+      Ma ligne de texte
+      Mon autre ligne de texte
+  
+  Il faut les reconstituer en :
+  
+    p.class: Ma ligne de texte
+    p.class: Mon autre ligne de texte
+
+  ## Examples
+
+      iex> treate_returns("Sans balise")
+      ~s(Sans balise)
+
+      iex> treate_returns("p.class: Sans retour")
+      ~s(p.class: Sans retour)
+
+      iex> treate_returns("p.class:\\n  Une première ligne\\n  Une seconde ligne")
+      ~s(p.class:Une première ligne\\np.class:Une seconde ligne)
+
+      iex> treate_returns("p.css:\\n\\tTabulation avant ligne\\n\\tAutre ligne tabulée")
+      ~s(p.css:Tabulation avant ligne\\np.css:Autre ligne tabulée)
+
+      iex> treate_returns("p.css2:\\n\\tUne ligne tabulée\\n  Une ligne avec deux espaces.")
+      ~s(p.css2:Une ligne tabulée\\np.css2:Une ligne avec deux espaces.)
+  
+  """
+  def treate_returns(str) do
     Regex.replace(@reg_indented_format, str, fn tout, _ -> 
       [amorce | phrases] = 
       tout
