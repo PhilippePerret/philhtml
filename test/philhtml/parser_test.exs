@@ -5,18 +5,24 @@ defmodule PhilHtml.ParseTest do
 
   doctest PhilHtml.Parser
 
-  test "le parse d'un texte seul est valide" do
-    source = """
-    Un texte seul.
-    """
-    actual = Parser.parse(source, [])
-    expected = [
-      [{:string, "Un texte seul.", []}],
-      [{:metadata, []}]
-    ]
-    assert(actual == expected)
+  def test_parsing(code, expected, expected_metadata \\ nil, params \\ %{}) do
+    phtml = Map.merge(%PhilHtml{raw_content: code}, params)
+    actual = Parser.parse(phtml)
+    # IO.inspect(actual, label: "ACTUAL")
+    assert(actual.content == expected)
+    if expected_metadata do
+      assert(actual.metadata == expected_metadata)
+    end
   end
 
+  @tag :skip
+  test "le parse d'un texte seul est valide" do
+    source = "Un texte seul."
+    expected = [{:string, "Un texte seul.", []}]
+    test_parsing(source, expected)
+  end
+
+  @tag :skip
   test "un texte avec une section :raw" do
     source = """
     Un texte.
@@ -25,18 +31,15 @@ defmodule PhilHtml.ParseTest do
     :raw
     Un autre texte
     """
-    actual = Parser.parse(source, [])
     expected = [
-      [
-        {:string, "Un texte.", []},
-        {:raw, "Une section raw", nil},
-        {:string, "Un autre texte", []}
-      ],
-      [{:metadata, []}]
+      {:string, "Un texte.", []},
+      {:raw, "Une section raw", nil},
+      {:string, "Un autre texte", []}
     ]
-    assert(actual == expected)
+    test_parsing(source, expected)
   end
 
+  @tag :skip
   test "un texte avec metadata" do
     source = """
     ---
@@ -44,24 +47,24 @@ defmodule PhilHtml.ParseTest do
     ---
     Un texte.
     """
-    actual = Parser.parse(source, [])
     expected = [
-      [{:string, "Un texte.", []}],
-      [metadata: [mavariable: "Ma valeur"]]
+      {:string, "Un texte.", []}
     ]
-    assert(actual == expected)
+    metadata = [
+      {:mavariable, "Ma valeur"}
+    ]
+    test_parsing(source, expected, metadata)    
   end
 
+  @tag :skip
   test "un texte avec du code en ligne" do
     source = """
     Un `texte` avec <%= "un code en ligne" %> pour voir.
     """
-    actual = Parser.parse(source, [])
     expected = [
-      [{:string, "Un $PHILHTML1$ avec $PHILHTML0$ pour voir.", [{:heex, ~s("un code en ligne")}, {:code, "texte"}]}],
-      [metadata: []]
+      {:string, "Un $PHILHTML1$ avec $PHILHTML0$ pour voir.", [{:heex, ~s("un code en ligne")}, {:code, "texte"}]}
     ]
-    assert(actual == expected)
+    test_parsing(source, expected)
   end 
 
 

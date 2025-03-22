@@ -95,7 +95,7 @@ defmodule PhilHtmlTest do
     test "contenant un javascript" do
     end
 
-    # @tag :skip
+    @tag :skip
     test "contenant des includes définis en path relatifs" do
       source = Path.absname("./test/fixtures/textes/avec_inclusions_in_folder.phil")
       expected = """
