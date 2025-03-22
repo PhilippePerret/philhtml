@@ -19,8 +19,8 @@ defmodule PhilHtml.Evaluator do
   def evaluate(phtml) when is_struct(phtml, PhilHtml) do
     heex      = phtml.heex
     options   = phtml.options
-    variables = Keyword.get(options, :variables, %{})
-    metadata  = phtml.metadata
+    _variables = Keyword.get(options, :variables, %{})
+    _metadata  = phtml.metadata
 
     # On parse pour isoler les codes à ne pas traiter
     [sections, options] = Parser.dispatch_html_content([heex, options])
@@ -28,7 +28,7 @@ defmodule PhilHtml.Evaluator do
 
     html = 
     sections
-    |> Enum.map(fn {type, content, raws} -> 
+    |> Enum.map(fn {type, content, _raws} -> 
       case type do
         :string -> evaluate_section(content, options)
         :code   -> "<code>#{content}</code>"

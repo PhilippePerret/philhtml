@@ -19,25 +19,36 @@ defmodule PhilHtml.Compiler do
   Principalement, cette fonction permet d'inclure les textes à
   inclure définis par [pre/]include(...)
   """
-  def pre_compile(phtml) when is_struct(phtml, PhilHtml) do
+  def pre_compile(phtml, :first) when is_struct(phtml, PhilHtml) do
+    phtml
+  end
+  def pre_compile(phtml, :inclusions) when is_struct(phtml, PhilHtml) do
     phtml = 
     Regex.scan(@reg_pre_include, phtml.raw_content)
     |> Enum.reduce(phtml, fn [tout, relpath], phtml ->
-      rempl = 
-        if File.exists?(relpath) do
-          File.read!(relpath)
-        else
-          "** (ArgumentError) File `#{relpath}' unfound."
+      fullpath = maybe_fullpath(relpath, phtml)
+      rempl = cond do
+        File.exists?(relpath) -> File.read!(relpath)
+        fullpath && File.exists?(fullpath) -> File.read!(fullpath)
+        true ->
+          "p.error:** (ArgumentError) File `#{relpath}' (fullpath: #{inspect fullpath}) unfound."
         end
       %{phtml | raw_content: String.replace(phtml.raw_content, tout, rempl)}
     end)
 
     Regex.scan(@reg_post_include, phtml.raw_content)
-    |> Enum.reduce(phtml, fn [tout, relpath], pthml ->
-      IO.inspect(tout, label: "tout")
+    |> Enum.reduce(phtml, fn [tout, relpath], phtml ->
       rempl = "p:$POSTINCLUDE[#{relpath}]$"
       %{phtml | raw_content: String.replace(phtml.raw_content, tout, rempl)}
     end)
+  end
+  
+  defp maybe_fullpath(relpath, phtml) do
+    if phtml.metadata[:folder] do
+      Path.join([phtml.metadata[:folder], relpath])
+    else 
+      nil 
+    end
   end
 
   @doc """
@@ -82,11 +93,13 @@ defmodule PhilHtml.Compiler do
       cond do
         is_binary(css)  -> [css]
         is_list(css)    -> Enum.reverse(css)
-        true ->
-          phtml = add_error(phtml, "Invalid type for css (#{css})")
-          []
+        true            -> :bad_css
       end |> Enum.reduce(phtml, fn css, phtml ->
-        %{phtml | heex: css_tag(css) <> phtml.heex}
+        if css == :bad_css do
+          add_error(phtml, "Invalid css: #{inspect css}")
+        else
+          %{phtml | heex: css_tag(css) <> phtml.heex}
+        end
       end)
     else phtml end
   end
@@ -98,13 +111,15 @@ defmodule PhilHtml.Compiler do
     meta = phtml.metadata
     if (js = Keyword.get(meta, :javascript, nil)) do
       cond do
-        is_binary(js)  -> [js]
-        is_list(js)    -> js
-        true ->
-          phtml = add_error(phtml, "Invalid type for js (#{js})")
-          []
+        is_binary(js) -> [js]
+        is_list(js)   -> js
+        true          -> :bad_js
       end |> Enum.reduce(phtml, fn js, phtml ->
-        %{phtml | heex: phtml.heex <> js_tag(js)}
+        if js == :bad_js do
+          add_error(phtml, "Invalid value for js: #{inspect js}")
+        else
+          %{phtml | heex: phtml.heex <> js_tag(js)}
+        end
       end)
     else phtml end
   end

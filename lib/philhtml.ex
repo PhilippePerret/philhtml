@@ -70,11 +70,11 @@ defmodule PhilHtml do
     |> Map.get(:html)
   end
 
-  def file_to_html(philpath, options) when is_binary(philpath) do
-    file_to_html(%PhilHtml{file: [src: philpath], options: options})
-  end
   def file_to_html(philpath) when is_binary(philpath) do
     file_to_html(philpath, [])
+  end
+  def file_to_html(philpath, options) when is_binary(philpath) do
+    file_to_html(%PhilHtml{file: [src: philpath], options: options})
   end
 
   @doc """

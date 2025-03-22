@@ -6,6 +6,7 @@ defmodule PhilHtml.Parser do
   - les codes à laisser tels quels
   """
 
+  alias PhilHtml.Compiler
 
   @doc """
   @main
@@ -19,6 +20,7 @@ defmodule PhilHtml.Parser do
     phtml
     |> split_front_matter()
     |> front_matter_to_metadata()
+    |> Compiler.pre_compile(:inclusions)
     |> explode_phil_content()
   end
 
@@ -67,7 +69,7 @@ defmodule PhilHtml.Parser do
   @return [metadata, content{list}, options]
   """
   def explode_phil_content(phtml) when is_struct(phtml, PhilHtml) do
-    [content, options] = explode_content([phtml.raw_content, phtml.options], [@reg_sections_raw_phil])
+    [content, _options] = explode_content([phtml.raw_content, phtml.options], [@reg_sections_raw_phil])
     %{phtml | content: content}
   end
 
@@ -131,7 +133,7 @@ defmodule PhilHtml.Parser do
         
       end
     end)
-    |> Enum.filter(fn {type, content, raws} -> 
+    |> Enum.filter(fn {_type, content, _raws} -> 
       not is_nil(content) and not (content == "")
     end)
     # |> IO.inspect(label: "Final Splited Content")

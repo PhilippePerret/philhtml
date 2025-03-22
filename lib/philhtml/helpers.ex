@@ -5,9 +5,10 @@ defmodule PhilHtml.Helpers do
   end
 
 
-  def constant_get(key) do
-    Constants.get(key)
-  end
+  # À mettre dans un module à transmettre à la compilation
+  # def constant_get(key) do
+  #   Constants.get(key)
+  # end
 
 
 end

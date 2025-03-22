@@ -57,7 +57,7 @@ defmodule PhilHtmlTest do
       assert(actual == expected |> String.trim())
     end
 
-    # @tag :skip
+    @tag :skip
     test "contenant une inclusion" do
       inclusion_path = Path.absname("./test/fixtures/textes/simple_include.phil")
       inclusion_post = Path.absname("./test/fixtures/textes/simple_post_include.phil")
@@ -82,7 +82,6 @@ defmodule PhilHtmlTest do
     @tag :skip
     test "un fichier simple" do
       src = Path.absname("test/fixtures/textes/simple.phil")
-      src = Path.absname("test/fixtures/textes/simple.phil")
       actual = PhilHtml.to_html(src)
       expected = "<p>Je suis un fichier très simple.</p>"
       assert(actual == expected)
@@ -96,5 +95,28 @@ defmodule PhilHtmlTest do
     test "contenant un javascript" do
     end
 
+    # @tag :skip
+    test "contenant des includes définis en path relatifs" do
+      source = Path.absname("./test/fixtures/textes/avec_inclusions_in_folder.phil")
+      expected = """
+      <p>Je suis un fichier très simple.</p>
+      <p>Je suis en <em>italique</em> et en <strong>gras</strong>.</p>
+      <pre><code>
+      Avec du code.
+      </code></pre>
+      <p class="error">** (ArgumentError) File `mauvais/path' (fullpath: \"./test/fixtures/textes/mauvais/path\") unfound.</p>
+      """
+
+      remove_html_of_phil(source)
+
+      actual = PhilHtml.to_html(source)
+      assert(actual == expected |> String.trim())
+    end
+  end
+
+  def remove_html_of_phil(philpath) do
+    affx = Path.basename(philpath, Path.extname(philpath))
+    dest = Path.join([Path.dirname(philpath), "#{affx}.html"])
+    File.exists?(dest) && File.rm(dest)
   end
 end

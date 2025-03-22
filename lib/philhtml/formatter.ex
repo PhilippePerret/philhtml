@@ -14,7 +14,7 @@ defmodule PhilHtml.Formatter do
   
   def formate(phtml) when is_struct(phtml, PhilHtml) do
     phtml
-    |> Compiler.pre_compile()
+    |> Compiler.pre_compile(:first) # ne fait rien pour le moment
     |> Parser.parse()
     # |> IO.inspect(label: "\n\n[formate(phtml)] APRÈS PARSE")
     |> formate_content()
@@ -52,7 +52,7 @@ defmodule PhilHtml.Formatter do
     |> Enum.join("\n")
   end
 
-  def formate_section(:raw, section, options) do
+  def formate_section(:raw, section, _options) do
     """
     <pre><code>
     #{section.content}
@@ -60,13 +60,13 @@ defmodule PhilHtml.Formatter do
     """
   end
 
-  def formate_section(:code, section, options) do
+  def formate_section(:code, section, _options) do
     """
     <code>#{section.content}</code>
     """
   end
 
-  def formate_section(:heex, section, options) do
+  def formate_section(:heex, section, _options) do
     """
     <%= #{section.content} %>
     """
@@ -95,7 +95,7 @@ defmodule PhilHtml.Formatter do
         nil -> "fonction inconnue #{fn_name}"
         tout -> 
           [module, fn_name, fn_params] = tout
-          rempl = Evaluator.evaluate_in(module, fn_name, fn_params)
+          Evaluator.evaluate_in(module, fn_name, fn_params)
       end
       String.replace(accu, tout, rempl)
     end)
@@ -133,7 +133,6 @@ defmodule PhilHtml.Formatter do
           [_tout, tag, selectors, content] = scanner
           tag = @smalltag_to_realtag[tag]
           selectors = extract_attributes_from(selectors)
-          |> IO.inspect(label: "sélectors finaux")
           tag = tag == "" && "p" || tag
           ~s(<#{tag}#{selectors}>#{treate_content(content, options)}</#{tag}>)
       end

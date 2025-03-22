@@ -1,0 +1,7 @@
+---
+folder = ./test/fixtures/textes/
+---
+include(simple.phil)
+include(with_styles.phil)
+include(raw_simple.phil)
+include(mauvais/path)
