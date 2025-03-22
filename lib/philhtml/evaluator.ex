@@ -16,26 +16,28 @@ defmodule PhilHtml.Evaluator do
   @return {HTMLString} Le code HTML final, tel qu'il doit être envoyé
   au navigateur client.
   """
-  def evaluate(%{html: html} = data, options) when is_map(data) do
-
+  def evaluate(phtml) when is_struct(phtml, PhilHtml) do
+    heex      = phtml.heex
+    options   = phtml.options
     variables = Keyword.get(options, :variables, %{})
-    |> IO.inspect(label: "Variables")
-    options = Keyword.put(options, :variables, variables)
+    metadata  = phtml.metadata
 
-    # On parse pour isoler les codes (ne pas les traiter)
-    [sections, options] = Parser.dispatch_html_content([html, options])
+    # On parse pour isoler les codes à ne pas traiter
+    [sections, options] = Parser.dispatch_html_content([heex, options])
     IO.inspect(sections, label: "SECTIONS DANS ÉVALUATE")
 
+    html = 
     sections
-    |> Enum.map(fn section -> 
-      case section.type do
-        :string -> evaluate_section(section.content, options)
-        :code   -> "<code>#{section.content}</code>"
-        :pre    -> "<pre>#{section.content}</pre>"
+    |> Enum.map(fn {type, content, raws} -> 
+      case type do
+        :string -> evaluate_section(content, options)
+        :code   -> "<code>#{content}</code>"
+        :pre    -> "<pre>#{content}</pre>"
       end
     end)
     |> Enum.join("\n")
 
+    %{phtml | html: html}
   end
 
   def evaluate_section(html, options) do

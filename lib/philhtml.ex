@@ -29,21 +29,26 @@ defmodule PhilHtml do
 
   @return {HTMLString} Le code formaté, évalué.
   """
-  # def to_html(code, options \\ [])
-
   def to_html(foo, options) when is_binary(foo) do
+    IO.puts "-> to_html avec un binaire et des options"
     if File.exists?(foo) do
       file_to_html(foo, options)
     else
-      to_html(%PhilHtml{file: [src: foo], options: options, raw_content: foo})
+      IO.puts "- ce n'est pas un fichier -"
+      to_html(%PhilHtml{raw_content: foo, options: options})
     end
   end
 
   def to_html(foo) when is_binary(foo) do
+    IO.puts "-> to_html avec un binaire sans option"
     to_html(foo, [])
   end
   def to_html(phtml) when is_struct(phtml, PhilHtml) do
-    phtml.html
+    IO.puts "-> to_html avec un phtml"
+    phtml 
+    |> Formatter.formate()
+    |> Evaluator.evaluate()
+    |> Map.get(:html)
   end
   
 
@@ -61,7 +66,7 @@ defmodule PhilHtml do
     phtml
     |> treate_path()
     |> load_or_formate_path()
-    # |> Evaluator.evaluate()
+    |> Evaluator.evaluate()
   end
 
   def file_to_html(philpath, options) when is_binary(philpath) do

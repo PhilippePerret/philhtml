@@ -1,6 +1,6 @@
 defmodule PhilHtml.Formatter do
 
-  alias PhilHtml.{Parser, Evaluator}
+  alias PhilHtml.{Parser, Evaluator, Compiler}
 
   @doc """
   @main
@@ -15,9 +15,9 @@ defmodule PhilHtml.Formatter do
   def formate(phtml) when is_struct(phtml, PhilHtml) do
     phtml
     |> Parser.parse()
-    |> IO.inspect(label: "\n\n[pour code html.heex] APRÈS PARSE")
+    |> IO.inspect(label: "\n\n[formate(phtml)] APRÈS PARSE")
     |> formate_content()
-    |> IO.inspect(label: "\n\nCODE HTML.HEEX FINAL")
+    |> IO.inspect(label: "\n\n[formate(phtml)] APRÈS Formatage du contenu")
     |> Compiler.compile()
   end
 
@@ -40,9 +40,13 @@ defmodule PhilHtml.Formatter do
   @return {HTMLString} Code html.heex de la page
   """
   def formate_content(phtml) do
+    %{phtml | heex: do_formate_content(phtml)}
+  end
+  defp do_formate_content(phtml) do
+    options = Keyword.put(phtml.options, :metadata, phtml.metadata)
     phtml.content
-    |> Enum.map(fn section ->
-      formate_section(section.type, section, phtml.options)
+    |> Enum.map(fn {type, section, raws} ->
+      formate_section(type, %{content: section, raws: raws}, options)
     end)
     |> Enum.join("\n")
   end
@@ -110,7 +114,7 @@ defmodule PhilHtml.Formatter do
 
   def build_as_html(content, options) do
 
-    default_tag = Keyword.get(options[:metadata], :default_tag, "p")
+    default_tag = Keyword.get(options, :default_tag, Keyword.get(options[:metadata], :default_tag, "p"))
 
     content
     |> treate_returns()
