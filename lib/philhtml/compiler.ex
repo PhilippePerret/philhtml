@@ -60,6 +60,7 @@ defmodule PhilHtml.Compiler do
     |> traite_post_inclusion()
     |> traite_fichiers_css()
     |> traite_fichiers_javascript()
+    |> put_in_full_code_or_meta_charset()
   end
 
   def traite_post_inclusion(phtml) do
@@ -125,5 +126,37 @@ defmodule PhilHtml.Compiler do
   end
   defp js_tag(relpath) do
     ~s(\n<script defer src="#{relpath}"></script>)
+  end
+
+
+
+  @doc """
+  Si les options le demandent, on produit un code complet, sinon on 
+  ajoute juste une balise <meta charset="utf-8"> pour les caractè-
+  res UTF8
+  """
+  def put_in_full_code_or_meta_charset(phtml) do
+    options = phtml.options
+    options =
+    if phtml.metadata[:full_code] do
+      Keyword.put(options, :full_code, true)
+    else options end
+    heex =
+    if options[:full_code] do
+      """
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <title>Titre à définir</title>
+          </head>
+        <body>
+          #{phtml.heex}
+        </body>
+      </html>
+      """
+    else
+      ~s(<meta charset="utf-8">\n) <> phtml.heex
+    end
+    %{phtml | heex: heex}
   end
 end

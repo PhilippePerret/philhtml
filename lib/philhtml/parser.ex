@@ -25,7 +25,7 @@ defmodule PhilHtml.Parser do
   end
 
   def split_front_matter(phtml) when is_struct(phtml, PhilHtml) do
-    parts = String.split(String.trim(phtml.raw_content), "---")
+    parts = String.split(String.trim(phtml.raw_content), "---", [parts: 3])
     if Enum.count(parts) == 3 do
       # <= Il y a un front-matter
       # => On ne prend que les parties utiles

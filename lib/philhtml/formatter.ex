@@ -47,7 +47,7 @@ defmodule PhilHtml.Formatter do
     options = Keyword.put(phtml.options, :metadata, phtml.metadata)
     phtml.content
     |> Enum.map(fn {type, section, raws} ->
-      formate_section(type, %{content: section, raws: raws}, options)
+      formated_code = formate_section(type, %{content: section, raws: raws}, options)
     end)
     |> Enum.join("\n")
   end
@@ -79,8 +79,22 @@ defmodule PhilHtml.Formatter do
     else options end
     section.content
     |> build_as_html(options)
+    |> replace_untouchable_codes(section.raws, options)
+
   end
 
+  def replace_untouchable_codes(fcode, raws, _options) do
+    IO.inspect([fcode, raws], label: "liste")
+    raws
+    |> Enum.with_index()
+    |> Enum.reduce(fcode, fn {raw, index}, fcode ->
+      tag = "$PHILHTML#{index}$"
+      case raw do
+        {:code, rempl} -> String.replace(fcode, tag, ~s(<code>#{rempl}</code>))
+        {:raw,  rempl} -> String.replace(fcode, tag, ~s(<pre><code>#{rempl}</code></pre>))
+      end
+    end)
+  end
 
 
   @reg_helpers_functions ~r/\b([a-zA-Z0-9_]+)\((.*)\)/U
