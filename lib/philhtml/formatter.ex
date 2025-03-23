@@ -183,6 +183,255 @@ defmodule PhilHtml.Formatter do
   end
 
 
+
+  @regex_guillemets ~r/(?:(^| | )")(.+)(?:"( | |$))/U ; @rempl_guillemets "\\1« \\2 »\\3"
+  @regex_apostrophes ~r/'/U       ; @rempl_apostrophes "’"
+
+  @doc """
+  ## Traitement des guillemets droits
+
+  ## Examples
+
+    iex> formate_smart_guillemets(~s("bonjour"), [])
+    "« bonjour »"
+
+    iex> formate_smart_guillemets(~s("bonjour" et "re-bonjour"), [])
+    "« bonjour » et « re-bonjour »"
+
+    - On ne touche à rien si :smarties est à false
+    iex> formate_smart_guillemets(~s("bonjour" et "re-bonjour"), [smarties: false])
+    ~s("bonjour" et "re-bonjour")
+
+    - On ne touche pas aux guillemets sans au moins un 'blanc' autour
+    iex> formate_smart_guillemets(~s(<span class="height:12px;">solide</span>), [])
+    ~s(<span class="height:12px;">solide</span>)
+
+    - Avec des guillemets à transformer et d'autres non
+    iex> formate_smart_guillemets(~s("bonjour" et >style="height:12x;">), [])
+    ~s(« bonjour » et >style="height:12x;">)
+
+    - Sauf si l'on n'a rien à corriger
+    iex> formate_smart_guillemets(~s("bonjour" et >style="height:12x;">), [smarties: false])
+    ~s("bonjour" et >style="height:12x;">)
+
+  """
+  def formate_smart_guillemets(string, options) do
+    if options[:smarties] == false do
+      string
+    else
+      string
+      |> String.replace(@regex_guillemets, @rempl_guillemets)
+      |> String.replace(@regex_apostrophes, @rempl_apostrophes)
+    end
+  end
+
+
+  @doc """
+  Pose des anti-wrappers sur les textes.
+
+  ## Explication
+
+    Même avec l'utilisation d'insécables ou de '&amp;nbsp;', des 
+    signes (comme des ponctuations) peuvent se retrouver à la ligne.
+    Pour empêcher ce comportement de façon définitive, on entoure les
+    texte "insécables" de <nowrap>...</nowrap> qui est une balise 
+    spéciale qui possède la propriété white-space à nowrap (d'où son
+    nom).
+    La méthode ci-dessous est chargée de cette opération.
+
+    Noter qu'elle intervient après que les guillemets ont été (ou 
+    non) remplacés par des chevrons. Elle s'assure également que 
+    tous les insécables aient été placés (même avec les chevrons car
+    ils ont pu être mis par l'utilisateur)
+
+  ## Examples
+
+    // Sans rien, ne change rien
+    iex> pose_anti_wrappers("bonjour tout le monde")
+    "bonjour tout le monde"
+
+    // Mot unique, simple guillemets sans insécables
+    iex> pose_anti_wrappers("« bonjour »")
+    T.h "<nowrap>« bonjour »</nowrap>"
+    
+    // Deux mots, simple guillemets sans insécables
+    iex> pose_anti_wrappers("« bonjour vous »")
+    T.h "<nowrap>« bonjour</nowrap> <nowrap>vous »</nowrap>"
+
+    // Plusieurs mots, simples guillemets sans insécables
+    iex> pose_anti_wrappers("« bonjour à tous »")
+    T.h "<nowrap>« bonjour</nowrap> à <nowrap>tous »</nowrap>"
+
+    iex> pose_anti_wrappers("bonjour !")
+    T.h "<nowrap>bonjour !</nowrap>"
+
+    iex> pose_anti_wrappers("bonjour !?!")
+    T.h "<nowrap>bonjour !?!</nowrap>"
+
+    iex> pose_anti_wrappers("bonjour vous !")
+    T.h "bonjour <nowrap>vous !</nowrap>"
+
+    iex> pose_anti_wrappers("bonjour vous !?")
+    T.h "bonjour <nowrap>vous !?</nowrap>"
+
+    iex> pose_anti_wrappers("« bonjour à tous ! »")
+    T.h "<nowrap>« bonjour</nowrap> à <nowrap>tous ! »</nowrap>"
+    
+    iex> pose_anti_wrappers("« bonjour à tous !?! »")
+    T.h "<nowrap>« bonjour</nowrap> à <nowrap>tous !?! »</nowrap>"
+    
+    iex> pose_anti_wrappers("« bonjour à tous » !")
+    T.h "<nowrap>« bonjour</nowrap> à <nowrap>tous » !</nowrap>"
+
+  """
+
+  # Pour insécables simples manquantes
+  @regex_req_insec_before_ponct ~r/ ([!?:;])/
+  @rempl_req_insec_before_poncts " \\1"
+  # Pour insécables manquantes entre tirets (penser qu'il peut y en 
+  # avoir quand même une de placée, d'où l'utilisation de [  ] au 
+  # lieu de l'espace seule)
+  @regex_req_insec_in_cont ~r/([—–«])[  ](.+)[  ]([»—–])/Uu
+  @rempl_req_insec_in_cont "\\1 \\2 \\3"
+  # Le cas le plus complexe, où l'on peut avoir guillemets + tirets +
+  # ponctuations doubles, dans tous les sens, c'est-à-dire aussi bien :
+  #   — « bonjour à tous » ! —
+  #   — « bonjour à tous » — !
+  #   « — bonjour à tous » ! —  -- fautif, quand même
+  #   « bonjour — à — tous ! »
+  #   « bonjour — à tous — » !
+  # Le seul cas qu'on envisage pas ici, c'est le cas de chevrons 
+  # imbriqués dans des chevrons, qui est une faute.
+  @regex_insecable_guils ~r/([—–«] )?([—–«] )(.+?)( [—–!?:;»]+)( [—–!?:;»]+)?( [—–!?:;»]+)?/u
+  @regex_insecable_tirets ~r/([—–])[  ](.+)[  ]([—–])/Uu
+  @regex_insecable_ponct ~r/([^ ]+) ([!?:;]+?)/Uu   ; @rempl_insecable_ponct "<nowrap>\\1&nbsp;\\2</nowrap>"
+  @regex_inner_tag ~r/<(.+)>/U
+  def pose_anti_wrappers(string, options \\ []) do
+    string
+    # On doit commencer par protéger toutes les espaces à l'intérieur
+    # des balises
+    |> string_replace(@regex_inner_tag, &antiwrappers_protect_space_in_tag/2, options)
+    # Ensuite, on peut mettre des espaces insécables là où ils 
+    # manquent
+    |> String.replace(@regex_req_insec_before_ponct, @rempl_req_insec_before_poncts)
+    |> String.replace(@regex_req_insec_in_cont, @rempl_req_insec_in_cont)
+    # Ensuite on traite tous les cas d'insécables imbriqués
+    |> string_replace(@regex_insecable_guils, &antiwrappers_guils_et_autres/7, options)
+    # |> string_replace(@regex_insecable_guils, options)
+    |> string_replace(@regex_insecable_tirets, options)
+    |> String.replace(@regex_insecable_ponct, @rempl_insecable_ponct)
+    # On remet les espaces à l'intérieur des balises
+    |> String.replace("ESP_PSE", " ")
+  end
+
+
+  defp antiwrappers_protect_space_in_tag(_tout, inner_tag) do
+    String.replace(inner_tag, " ", "ESP_PSE")
+  end
+
+  defp antiwrappers_guils_et_autres(tout, arg1, arg2, inner_guils, arg3, arg4, arg5) do
+    # Le principe simple est le suivant : si +inner_guils+ contient 
+    # un seul mot, on met le nowrap autour de tout, alors que s'il y
+    # en a plusieurs, on ne prend que le dernier.
+    inner_guils = String.split(inner_guils, " ")
+    cond do
+    Enum.count(inner_guils) == 1 -> 
+      "<nowrap>#{tout}</nowrap>"
+    Enum.count(inner_guils) == 2 -> 
+      [first_mot, last_mot] = inner_guils
+      "<nowrap>#{arg1}#{arg2}#{first_mot}</nowrap> <nowrap>#{last_mot}#{arg3}#{arg4}#{arg5}</nowrap>"
+    true ->
+      {first_mot, reste}  = List.pop_at(inner_guils, 0)
+      {last_mot, reste}   = List.pop_at(reste, -1)
+      reste = Enum.join(reste, " ")
+      "<nowrap>#{arg1}#{arg2}#{first_mot}</nowrap> #{reste} <nowrap>#{last_mot}#{arg3}#{arg4}#{arg5}</nowrap>"
+    end 
+    |> String.replace(~r/ /, "&nbsp;")
+  end
+
+
+  @regex_exposants ~r/\^(.+)\b/Uu
+  @regex_exposants_implicites1 ~r/([XV])(ème|eme|e)/Uu
+  # Pas "C" qui traiterait "Ce" ni "M" qui traiterait "Me"
+  @regex_exposants_implicites2 ~r/([0-9])(ère|ere|ème|eme|eres|er|re|e)/Uu
+  @table_remplacement_exposants %{"ere" => "re", "ère" => "re", "eres" => "res", "eme" => "e", "ème" => "e"}
+  
+  @doc """
+  Formatage des exposants dans le code +string+
+
+  Note : La fonction corrige aussi les erreurs courantes.
+
+  ## Examples
+
+    iex> formate_exposants("1^er", [])
+    ~s(1<sup>er</sup>)
+
+    iex>formate_exposants("1^premier pour voir", [])
+    ~s(1<sup>premier</sup> pour voir)
+
+    iex>formate_exposants("1^ere", [])
+    ~s(1<sup>re</sup>)
+
+  """
+  def formate_exposants(string, options) do
+    new_string =
+    Regex.replace(@regex_exposants, string, fn _tout, found ->
+      found = if options[:correct] == false do
+        found
+      else
+        @table_remplacement_exposants[found] || found
+      end
+      "<sup>#{found}</sup>"
+    end)
+  
+    new_string =
+      Regex.replace(@regex_exposants_implicites1, new_string, fn tout, avant, expose ->
+        if options[:correct] == false do
+          tout
+        else
+          expose = @table_remplacement_exposants[expose] || expose
+          "#{avant}<sup>#{expose}</sup>"
+        end
+      end)
+
+    Regex.replace(@regex_exposants_implicites2, new_string, fn tout, avant, expose ->
+    if options[:correct] == false do
+      tout
+    else
+      expose = @table_remplacement_exposants[expose] || expose
+      "#{avant}<sup>#{expose}</sup>"
+    end
+  end)
+  end
+
+  # Méthode "détachée" permettant de placer les anti-wrappers sur les
+  # String en tenant compte du nombre de mots.
+  defp string_replace(string, regex, _options) do
+    if String.match?(string, regex) do
+      Regex.replace(regex, string, fn _tout, tbefore, content, tafter ->
+        founds = String.split(content, " ")
+        if Enum.count(founds) > 1 do
+          # Contenu de plusieurs mot
+          {first, founds} = List.pop_at(founds, 0)
+          {last, founds}  = List.pop_at(founds, -1)
+          reste = 
+            if Enum.any?(founds) do
+              " " <> Enum.join(founds, " ") <> " "
+            else
+              " "
+            end
+          "<nowrap>#{tbefore} #{first}</nowrap>#{reste}<nowrap>#{last} #{tafter}</nowrap>"
+        else
+          # Contenu d'un seul mot
+          "<nowrap>#{tbefore} #{content} #{tafter}</nowrap>"
+        end
+      end)
+    else
+      string
+    end
+  end
+
+
   @smalltag_to_realtag %{
     ""  => "p", # par défaut
     "p" => "p",
@@ -290,13 +539,22 @@ defmodule PhilHtml.Formatter do
   @doc """
   Traite du pur contenu. Tout ce qui est analysé comme du pur contenu 
   doit passer par ici.
+
+  @param {String} content Le texte à tranformer
+  @param {Keyword} options Les options éventuelles
+
+  @return {String} Le contenu modifié
   """
   def treate_content(content, options) do
     content
     |> Evaluator.evaluate_on_compile(options)
     |> evaluate_helpers_functions(options)
+    # À partir d'ici on formate/corrige vraiment le texte
+    |> formate_smart_guillemets(options)
+    |> pose_anti_wrappers(options)
     |> treate_alinks_in(options)
     |> treate_simple_formatages(options)
+    |> formate_exposants(options)
   end
 
 
@@ -425,6 +683,17 @@ defmodule PhilHtml.Formatter do
     Regex.replace(reg, str, remp)
   end
 
+  # Fonction traitant les anti-wrappers sur les strings avec guillemets
+  # Elle permet d'utiliser Regex.replace dans un pipe de strings avec
+  # la même utilisation d'une fonction de traitement (+callback)
+  # 
+  # @param {String} string La chaine à traiter
+  # @param {Regex} regex L'expression régulière
+  # @param {Function} callback La fonction de traitement
+  # @param {Keyword} options Les options éventuelles.
+  defp string_replace(string, regex, callback, _options) do
+    Regex.replace(regex, string, callback)
+  end
 
   defp extract_attributes_from(str) do
     attributes = 
