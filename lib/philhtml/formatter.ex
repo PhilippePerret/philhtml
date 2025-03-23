@@ -54,7 +54,7 @@ defmodule PhilHtml.Formatter do
       end
     end)
     |> Enum.join("\n")
-    |> IO.inspect(label: "Code après formate_section")
+    # |> IO.inspect(label: "Code après formate_section")
   end
 
   def formate_section(:raw, section, _options) do
@@ -72,7 +72,7 @@ defmodule PhilHtml.Formatter do
   end
 
   def formate_section(:code, section, _options) do
-    IO.inspect(section.params, label: "params Dans la section formate_section")
+    # IO.inspect(section.params, label: "params Dans la section formate_section")
     collector = %{content: section.content, pre: "<pre>", code: "<code>", options: []}
     
     collector =
