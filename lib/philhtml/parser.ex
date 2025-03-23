@@ -10,7 +10,7 @@ defmodule PhilHtml.Parser do
 
   import SafeString
 
-  @sep "$$$"
+  @sep "XxXxX"
 
   @doc """
   @main
@@ -90,15 +90,6 @@ defmodule PhilHtml.Parser do
     %{phtml | content: content}
   end
 
-  @doc """
-  Explosion du contenu mais quand c'est déjà du code HEEX et qu'on
-  doit seulement évaluer les codes heex.
-  """
-  def dispatch_html_content([content, options]) do
-    options = Keyword.put(options, :html_step, true)
-    explode_content([content, options], [@reg_blocs_code_in_html, @reg_codes_inline_in_html])
-  end
-
   def explode_content([content, options], regex) do
     # Pour être sûr d'avoir un texte au début, même lorsque le code 
     # commence par une section :raw
@@ -125,7 +116,7 @@ defmodule PhilHtml.Parser do
         # La marque de bloc peut être suivie de paramètre
         # (mais seulement quand on passe du document phil au document
         #  heex, pas quand on parse le document heex. pour l'évaluer)
-        [params, code] = if !options[:html_step] && Regex.match?(~r/\n/, code) do
+        [params, code] = if Regex.match?(~r/\n/, code) do
           String.split(code, "\n", [parts: 2])
         else 
           # Par exemple pour le code entre backstick ou le code à

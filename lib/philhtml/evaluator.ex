@@ -38,7 +38,7 @@ defmodule PhilHtml.Evaluator do
   """
   def evaluate_on_render(phtml) do
     options = phtml.options
-    Regex.scan(@reg_phil_code_on_render, phtml.html)
+    Regex.scan(@reg_phil_code_on_render, phtml.heex)
     |> Enum.reduce(phtml, fn [tout, transformers, content], phtml ->
       rempl = evaluate_code(content, transformers, options)
       %{phtml | html: String.replace(phtml.html, tout, rempl)}

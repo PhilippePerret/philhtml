@@ -125,13 +125,17 @@ defmodule PhilHtml.Formatter do
   end
 
   def replace_untouchable_codes(fcode, raws, _options) do
+    IO.inspect(fcode, label: "fcode donné à replace_untouchable_codes")
+    IO.inspect(raws, label: "raws donnés à replace_untouchable_codes")
     raws
     |> Enum.with_index()
     |> Enum.reduce(fcode, fn {raw, index}, fcode ->
       tag = "$PHILHTML#{index}$"
+      IO.inspect(raw, label: "raw pour #{tag}")
       case raw do
         {:code, rempl} -> String.replace(fcode, tag, ~s(<code>#{rempl}</code>))
         {:raw,  rempl} -> String.replace(fcode, tag, ~s(<pre><code>#{rempl}</code></pre>))
+        {:heex, rempl} -> String.replace(fcode, tag, ~s(#{rempl}???))
       end
     end)
   end
