@@ -8,11 +8,11 @@ defmodule PhilHtml.Compiler do
   # require PhilHtml.UsefullMethods
   import PhilHtml.UsefullMethods
 
-  @reg_pre_include ~r/^(?:pre\/)?include\((.+)\)/Um
+  @reg_pre_include ~r/^(?:pre\/)?inc(?:lude)?:(.+)$/Um
   # La première expression qui permet de retirer cette fonction qui
   # ne doit pas être interprété au cours du traitement comme une 
   # fonction.
-  @reg_post_include ~r/^post\/include\((.+)\)/Um
+  @reg_post_include ~r/^post\/inc(?:lude)?:(.+)$/Um
   @reg_post_include_end ~r/^<p>\$POSTINCLUDE\[(.+)\]\$<\/p>/Um
 
   @doc """
@@ -41,6 +41,31 @@ defmodule PhilHtml.Compiler do
       rempl = "p:$POSTINCLUDE[#{relpath}]$"
       %{phtml | raw_content: String.replace(phtml.raw_content, tout, rempl)}
     end)
+  end
+
+  @reg_inline_comments ~r/^c\:.+$/Um
+  @reg_bloc_comments  ~r/^c\:(\s+)?\n+.+\n\:c/Usm
+  @reg_multi_returns ~r/\n\n\n+/ ; @remp_multi_returns "\n\n"
+
+  # Suppression des commentaires. On peut les trouver en ligne :
+  #   «««««««««««««««««««
+  #   c: Un commentaire
+  #   »»»»»»»»»»»»»»»»»»»
+  # ou en bloc :
+  #   «««««««««««««««««««
+  #   c:
+  #   Un bloc de commentaire dans le texte.
+  #   :c
+  #   »»»»»»»»»»»»»»»»»»»»
+  # 
+  def pre_compile(phtml, :remove_comments) do
+    content = 
+    phtml.raw_content
+    |> String.replace(@reg_bloc_comments, "")
+    |> String.replace(@reg_inline_comments, "")
+    |> String.replace(@reg_multi_returns, @remp_multi_returns)
+    |> IO.inspect(label: "Après remplacement")
+    %{phtml | raw_content: content}
   end
   
   defp maybe_fullpath(relpath, phtml) do

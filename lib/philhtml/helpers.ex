@@ -17,7 +17,7 @@ defmodule PhilHtml.Helpers do
   marque propre.
   """
   def toc do
-    "html: Je dois apprendre à construire la table des matières."
+    "{html: Je dois apprendre à construire la table des matières.}"
   end
 
 

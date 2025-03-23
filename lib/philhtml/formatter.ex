@@ -14,7 +14,7 @@ defmodule PhilHtml.Formatter do
   
   def formate(phtml) when is_struct(phtml, PhilHtml) do
     phtml
-    |> Compiler.pre_compile(:first) # ne fait rien pour le moment
+    |> Compiler.pre_compile(:first)
     |> Parser.parse()
     # |> IO.inspect(label: "\n\n[formate(phtml)] APRÈS PARSE")
     |> formate_content()

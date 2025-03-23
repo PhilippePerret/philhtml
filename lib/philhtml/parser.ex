@@ -23,6 +23,7 @@ defmodule PhilHtml.Parser do
     |> split_front_matter()
     |> front_matter_to_metadata()
     |> Compiler.pre_compile(:inclusions)
+    |> Compiler.pre_compile(:remove_comments)
     |> explode_phil_content()
   end
 
@@ -118,7 +119,13 @@ defmodule PhilHtml.Parser do
           "`"   -> :inline_code
           _ -> String.to_atom(type)
         end
-        [params, code] = String.split(code, "\n", [parts: 2])
+        [params, code] = if Regex.match?(~r/\n/, code) do
+          String.split(code, "\n", [parts: 2])
+        else 
+          # Par exemple pour le code entre backstick ou le code à
+          # évaluer
+          ["", code] 
+        end
         section = {type, String.trim(code), String.trim(params)}
         %{
           content: String.replace(collector.content, tout, "$PHILSEP-#{Enum.count(collector.sections)}$"),
