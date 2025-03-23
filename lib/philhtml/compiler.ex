@@ -114,19 +114,18 @@ defmodule PhilHtml.Compiler do
 
   def compile_css(phtml) do
     meta = phtml.metadata
-    if (css = Keyword.get(meta, :css, nil)) do
-      cond do
-        is_binary(css)  -> [css]
-        is_list(css)    -> Enum.reverse(css)
-        true            -> :bad_css
-      end |> Enum.reduce(phtml, fn css, phtml ->
-        if css == :bad_css do
-          add_error(phtml, "Invalid css: #{inspect css}")
-        else
-          %{phtml | heex: css_tag(css) <> phtml.heex}
-        end
-      end)
-    else phtml end
+    css = ["common.css"] ++ (Keyword.get(meta, :css, []))
+    cond do
+      is_binary(css)  -> [css]
+      is_list(css)    -> Enum.reverse(css)
+      true            -> :bad_css
+    end |> Enum.reduce(phtml, fn css, phtml ->
+      if css == :bad_css do
+        add_error(phtml, "Invalid css: #{inspect css}")
+      else
+        %{phtml | heex: css_tag(css) <> phtml.heex}
+      end
+    end)
   end
   defp css_tag(relpath) do
     ~s(<link rel="stylesheet" href="#{relpath}" />\n)

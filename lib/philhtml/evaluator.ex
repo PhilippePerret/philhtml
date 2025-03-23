@@ -38,6 +38,7 @@ defmodule PhilHtml.Evaluator do
   """
   def evaluate_on_render(phtml) do
     options = phtml.options
+    phtml = %{phtml | html: phtml.heex}
     Regex.scan(@reg_phil_code_on_render, phtml.heex)
     |> Enum.reduce(phtml, fn [tout, transformers, content], phtml ->
       rempl = evaluate_code(content, transformers, options)
@@ -82,6 +83,7 @@ defmodule PhilHtml.Evaluator do
   end
 
   @reg_function_with_args ~r/^([a-zA-Z_0-9\?\!]+)\((.*)\)$/Um
+
   def evaluate_code_as(:function, content, options) do
     found_function = Regex.run(@reg_function_with_args, content)
     if is_nil(found_function) do nil else
@@ -89,7 +91,7 @@ defmodule PhilHtml.Evaluator do
       dmodule = module_helper_for?(fn_name, fn_params, options)
       cond do
         is_nil(dmodule) -> 
-          raise "Fonction inconnue : #{fn_name}/#{Enum.count(StringTo.list(fn_params))}"
+          ~s(<span class="error">** Unknown function: #{fn_name}/#{Enum.count(StringTo.list(fn_params))}</span>)
         true -> 
           [module, fn_name, fn_params] = dmodule
           evaluate_in(module, fn_name, fn_params)

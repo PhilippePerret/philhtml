@@ -1,0 +1,28 @@
+a, a:link, a:hover, a:visited {
+  text-decoration: none;
+}
+
+section.tdm-section {
+  margin-left: 4em;
+  padding:1.5em;
+  border-radius:1.5em;
+}
+div.level-2 {
+  margin-left: 0;
+}
+div.level-3 {
+  margin-left: 1em;
+  font-size: 0.95em;
+}
+div.level-4 {
+  margin-left: 2em;
+  font-size: 0.9em;
+}
+div.level-5 {
+  margin-left: 3em;
+  font-size: 0.85em;
+}
+div.level-6 {
+  margin-left: 4em;
+  font-size: 0.8em;
+}

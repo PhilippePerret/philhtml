@@ -48,9 +48,11 @@ defmodule PhilHtml do
     # IO.puts "-> to_html avec un phtml"
     phtml 
     |> Formatter.formate()
-    # |> Evaluator.evaluate()
+    # |> IO.inspect(label: "[to_html(%PhilHtml{})] Après formate/1")
     |> Evaluator.evaluate_on_render()
+    # |> IO.inspect(label: "[to_html(%PhilHtml{})] Après evaluate_on_render/1")
     |> Map.get(:html)
+    # |> IO.inspect(label: "[to_html(%PhilHtml{})] Après get(:html)")
   end
   
 

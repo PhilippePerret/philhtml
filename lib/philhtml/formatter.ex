@@ -274,10 +274,10 @@ defmodule PhilHtml.Formatter do
     # On peut maintenant la mettre en forme
     ftdm = 
     Enum.map(phtml.tdm, fn {level, title, id} ->
-      ~s(<a class="tdm level-#{level}" href="##{id}">#{title}</a>)
+      ~s(<div class="tdm"><a class="level-#{level}" href="##{id}">#{title}</a></div>)
     end)
     |> Enum.join("\n")
-    ftdm = ~s(<section class="tdm">#{ftdm}</section>)
+    ftdm = ~s(<section class="tdm-section">#{ftdm}</section>)
     |> IO.inspect(label: "TDM FINALE")
 
     %{phtml | heex: String.replace(phtml.heex, @reg_tdm_mark, ftdm)}
