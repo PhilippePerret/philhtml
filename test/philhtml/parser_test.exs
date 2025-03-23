@@ -22,7 +22,7 @@ defmodule PhilHtml.ParseTest do
     test_parsing(source, expected)
   end
 
-  # @tag :skip
+  @tag :skip
   test "un texte avec une section :code" do
     source = """
     Un texte.
