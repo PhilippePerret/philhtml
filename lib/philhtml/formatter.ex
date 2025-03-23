@@ -19,6 +19,7 @@ defmodule PhilHtml.Formatter do
     # |> IO.inspect(label: "\n\n[formate(phtml)] APRÈS PARSE")
     |> formate_content()
     # |> IO.inspect(label: "\n\n[formate(phtml)] APRÈS formate_content")
+    |> formate_toc_if_required()
     |> Compiler.post_compile()
   end
 
@@ -235,6 +236,56 @@ defmodule PhilHtml.Formatter do
     |> Enum.join("\n")
 
   end
+
+  # ================================================================
+  #                T A B L E   D E S   M A T I È R E S
+  # ================================================================
+
+  @reg_tdm_mark ~r/PHILTOCPHIL/
+  @reg_tdm_title ~r/<h([2-6])(.*)>(.+)<\/h\1>/U
+
+  def formate_toc_if_required(phtml) do
+    case String.match?(phtml.heex, @reg_tdm_mark) do
+    true -> formate_toc(phtml)
+    _ -> phtml
+    end
+  end
+
+  def formate_toc(phtml) do
+    phtml = %{phtml | tdm: []}
+
+    phtml =
+    Regex.scan(@reg_tdm_title, phtml.heex)
+    |> Enum.with_index()
+    |> Enum.reduce(phtml, fn {[tout, level, attrs, title], index}, phtml ->
+      id = "tdm#{index}"
+      # On ajoute ça à la table des matières
+      tdm = phtml.tdm ++ [{String.to_integer(level), String.trim(title), id}]
+      # Il faut ajouter un identifiant au titre s'il n'en a pas déjà,
+      # sinon il faut le prendre
+      rempl = ~s(<h#{level}#{attrs} id="#{id}">#{title}</h#{level}>)
+      heex = String.replace(phtml.heex, tout, rempl, [global: false])
+      Map.merge(phtml, %{heex: heex, tdm: tdm})
+    end)
+
+    IO.inspect(phtml.tdm, label: "Tous les titres")
+
+    # Tous les titres de tdm sont dans phtml.tdm
+    # On peut maintenant la mettre en forme
+    ftdm = 
+    Enum.map(phtml.tdm, fn {level, title, id} ->
+      ~s(<a class="tdm level-#{level}" href="##{id}">#{title}</a>)
+    end)
+    |> Enum.join("\n")
+    ftdm = ~s(<section class="tdm">#{ftdm}</section>)
+    |> IO.inspect(label: "TDM FINALE")
+
+    %{phtml | heex: String.replace(phtml.heex, @reg_tdm_mark, ftdm)}
+  end
+
+
+
+  # ================================================================
 
   @doc """
   Traite du pur contenu. Tout ce qui est analysé comme du pur contenu 

@@ -10,14 +10,13 @@ defmodule PhilHtml.Helpers do
   def p(arg), do: path(arg)
 
   @doc """
-  Construction de la table des matières.
+  Demande de construction de la table des matières
 
-  MAIS… Comment obtenir le code ?… Je pense qu'il faut un traitement 
-  spécial de cette fonction et peut-être même utiliser plutôt une
-  marque propre.
+  Cette fonction se contente de placer la marque pour savoir où 
+  la table des matières devra être inscrite à la fin.
   """
   def toc do
-    "{html: Je dois apprendre à construire la table des matières.}"
+    "PHILTOCPHIL"
   end
 
 

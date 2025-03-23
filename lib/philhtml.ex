@@ -17,6 +17,7 @@ defmodule PhilHtml do
     heex:     nil,    # Le code formaté en HEEX
     html:     nil,    # Le code final évalué
     metadata: [],     # Les métadonnées
+    tdm:      nil,    # Pour construire la table des matières
     errors: [] # Les erreurs rencontrées
   ]
 
