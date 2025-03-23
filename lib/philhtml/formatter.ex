@@ -238,6 +238,7 @@ defmodule PhilHtml.Formatter do
   """
   def treate_content(content, options) do
     content
+    |> Evaluator.evaluate_on_compile(options)
     |> evaluate_helpers_functions(options)
     |> treate_alinks_in(options)
     |> treate_simple_formatages(options)

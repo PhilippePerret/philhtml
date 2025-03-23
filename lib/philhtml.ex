@@ -47,7 +47,8 @@ defmodule PhilHtml do
     # IO.puts "-> to_html avec un phtml"
     phtml 
     |> Formatter.formate()
-    |> Evaluator.evaluate()
+    # |> Evaluator.evaluate()
+    |> Evaluator.evaluate_on_render()
     |> Map.get(:html)
   end
   
@@ -66,7 +67,7 @@ defmodule PhilHtml do
     phtml
     |> treate_path()
     |> load_or_formate_path()
-    |> Evaluator.evaluate()
+    |> Evaluator.evaluate_on_render()
     |> Map.get(:html)
   end
 

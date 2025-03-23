@@ -10,6 +10,8 @@ defmodule PhilHtml.Parser do
 
   import SafeString
 
+  @sep "$$$"
+
   @doc """
   @main
   Fonction principale qui parse le code d'un fichier .phil pour :
@@ -147,13 +149,13 @@ defmodule PhilHtml.Parser do
     sections
     |> Enum.with_index()
     |> Enum.reduce(content, fn {{type, content, params}, index}, collector ->
-      String.replace(collector, "\$PHILSEP-#{index}\$", "$PHILSEP$#{type}::#{params}::#{content}$PHILSEP$")
+      String.replace(collector, "\$PHILSEP-#{index}\$", "$PHILSEP$#{type}#{@sep}#{params}#{@sep}#{content}$PHILSEP$")
     end)
     |> String.split("$PHILSEP$")
     |> Enum.map(fn content -> 
       content = String.trim(content)
-      if String.match?(content, ~r/^([a-z]+)::(.+)/) do
-        [type_section, params_section, content_section] = String.split(content, "::", [parts: 3, trim: false])
+      if String.match?(content, ~r/^([a-z]+)#{@sep}(.+)/) do
+        [type_section, params_section, content_section] = String.split(content, "#{@sep}", [parts: 3, trim: false])
         params_section = nil_if_empty(params_section)
         {String.to_atom(type_section), content_section, params_section}
       else

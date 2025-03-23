@@ -6,74 +6,111 @@ defmodule PhilHtml.Evaluator do
 
   alias PhilHtml.Parser
 
+  import PhilHtml.UsefullMethods
 
-  @reg_heex_variable ~r/<\%\=(.+?)\%>/
 
+  # @reg_heex_variable ~r/<\%\=(.+?)\%>/
+
+  @reg_phil_code_on_compile ~r/<\:([rfc])?[ \n]+(.+)[ \n]+\:>/Um
+  @reg_phil_code_on_render ~r/<\:\:([rfc])?\w+(.+)\w+\:\:>/Um
 
   @doc """
-  Méthode principale évaluant les <%= ... %> dans le code formaté.
+  Evalue le code <: ... :> à la compilation
 
-  @return {HTMLString} Le code HTML final, tel qu'il doit être envoyé
-  au navigateur client.
   """
-  def evaluate(phtml) when is_struct(phtml, PhilHtml) do
-    heex      = phtml.heex
-    options   = phtml.options
-    _variables = Keyword.get(options, :variables, %{})
-    _metadata  = phtml.metadata
-
-    # On parse pour isoler les codes à ne pas traiter
-    [sections, options] = Parser.dispatch_html_content([heex, options])
-    # IO.inspect(sections, label: "SECTIONS DANS ÉVALUATE")
-
-    html = 
-    sections
-    |> Enum.map(fn {type, content, _raws} -> 
-      case type do
-        :string -> evaluate_section(content, options)
-        :code   -> "<code>#{content}</code>"
-        :pre    -> 
-          IO.inspect(content, label: "Content à mettre dans le <pre>")
-          "<pre>#{content}</pre>"
-      end
-    end)
-    |> Enum.join("\n")
-
-    %{phtml | html: html}
-  end
-
-  def evaluate_section(html, options) do
-    # IO.inspect(html, label: "fourni à evaluate_section/2")
-    Regex.scan(@reg_heex_variable, html) 
-    # |> IO.inspect(label: "Résultat du scan")
-    |> Enum.reduce(html, fn [tout, elixir], collector ->
-      elixir = String.trim(elixir)
-      # IO.inspect(elixir, label: "Found")
-
-      found_function = Regex.run(~r/^([a-zA-Z_0-9\?]+)\((.+)\)$/U, elixir)
-
-      evaluated_elixir =
-      if is_nil(found_function) do
-        {evaluated_elixir, _binding} = Code.eval_string(elixir, options[:variables])
-        evaluated_elixir
-      else
-        [_tout, fn_name, fn_params] = found_function
-        dmodule = module_helper_for?(fn_name, fn_params, options)
-        cond do
-          is_nil(dmodule) -> 
-            raise "Fonction inconnue : #{fn_name}/#{Enum.count(StringTo.list(fn_params))}"
-          true -> 
-            [module, fn_name, fn_params] = dmodule
-            evaluate_in(module, fn_name, fn_params)
-        end
-
-      end
-
-      IO.inspect(evaluated_elixir, label: "Code évalué")
-      String.replace(collector, tout, evaluated_elixir)
-      |> IO.inspect(label: "avec le code remplacé")
+  def evaluate_on_compile(html, options) do
+    Regex.scan(@reg_phil_code_on_compile, html)
+    |> Enum.reduce(html, fn [tout, transformers, content], html ->
+      rempl = evaluate_code(content, transformers, options)
+      String.replace(html, tout, "#{rempl}")
     end)
   end
+
+  @doc """
+
+  Note : contrairement à la précédente, cette fonction reçoit et
+  retourne une structure PhilHtml
+
+  @param {PhilHtml} phtml La structure de construction
+  
+  @return {PhilHtml} La structure de construction avec le nouveau 
+  code évalué.
+  """
+  def evaluate_on_render(phtml) do
+    options = phtml.options
+    Regex.scan(@reg_phil_code_on_render, phtml.html)
+    |> Enum.reduce(phtml, fn [tout, transformers, content], phtml ->
+      rempl = evaluate_code(content, transformers, options)
+      %{phtml | html: String.replace(phtml.html, tout, rempl)}
+    end)
+  end
+
+  @doc """
+  Fonction généraliste qui évalue (à la compilation ou au rendu) le
+  code +content+, le transforme éventuellement avec les transformers.
+
+  Pour procéder à cette opération, la fonction opère à trois niveaux :
+
+    1)  Si c'est une fonction, elle essaie de la trouver dans un des helpers
+    2)  elle essaie de remplacer la variable potentiellement donnée en argument
+    3)  elle essaie enfin d'évaluer le code tel quel (il peut contenir
+        des variables définies dans les options)
+
+  @param {String} content   Le texte/code à évaluer
+  @param {List} transformers  Les transformeurs, une liste pouvant contenir "f", "c" ou "r"
+                              f: seulement le formatage
+                              c: seulement la correction
+                              r: le code tel quel
+                              rien:  le code sera corrigé et formaté
+  @param {Keyword} options
+  @param {List} options.helpers   Les helpers à utiliser (ajoutés au helper par défaut PhilHtml.Helpers)
+  @param {Map}  options.variables Des variables définies
+  """
+  def evaluate_code(content, transformers, options) do
+    options = if options[:variables] do options else
+      Keyword.put(options, :variables, [])
+    end
+    # IO.inspect(content, label: "\nContenu à évaluer…")
+    # IO.inspect(options, label: "\navec les options…")
+
+    evaluated = evaluate_code_as(:function, content, options)
+    evaluated = evaluated || evaluate_code_as(:variable, content, options)
+    evaluated = evaluated || evaluate_code_as(:elixir, content, options)
+
+    evaluated
+    # |> IO.inspect(label: "Contenu évalué")
+  end
+
+  @reg_function_with_args ~r/^([a-zA-Z_0-9\?\!]+)\((.*)\)$/Um
+  def evaluate_code_as(:function, content, options) do
+    found_function = Regex.run(@reg_function_with_args, content)
+    if is_nil(found_function) do nil else
+      [_tout, fn_name, fn_params] = found_function
+      dmodule = module_helper_for?(fn_name, fn_params, options)
+      cond do
+        is_nil(dmodule) -> 
+          raise "Fonction inconnue : #{fn_name}/#{Enum.count(StringTo.list(fn_params))}"
+        true -> 
+          [module, fn_name, fn_params] = dmodule
+          evaluate_in(module, fn_name, fn_params)
+      end
+    end
+  end
+
+  def evaluate_code_as(:variable, content, options) do
+    if is_empty(options[:variables]) do nil else
+      Keyword.get(options[:variables], String.to_atom(content))
+    end
+  end
+
+  def evaluate_code_as(:elixir, content, options) do
+    # IO.inspect(content, label: "Contenu elixir à évaluer")
+    # IO.inspect(options[:variables], label: "Variables")
+    {result, _variables} = Code.eval_string(content, options[:variables])
+    result
+  end
+
+
 
 
   def evaluate_in(module, fn_name, fn_params) when is_binary(fn_name) do
@@ -109,12 +146,17 @@ defmodule PhilHtml.Evaluator do
     # Liste de tous les modules
     (Keyword.get(options, :helpers, []) ++ [PhilHtml.Helpers])
     |> Enum.filter(fn module ->
-      cond do    
-        Kernel.function_exported?(module, fn_name, arity) -> true
-        true -> false
-      end
-      # |> IO.inspect(label: "Condition pour module #{module} #{inspect fn_name}/#{arity}")
-    end)
+        case Code.ensure_loaded(module) do
+          {:error, _err} -> raise "Le module #{module} est inconnu…"
+          _ -> 
+            cond do
+              Kernel.function_exported?(module, fn_name, arity) -> 
+                true
+              true ->
+                false
+            end    
+        end
+      end)
     |> Enum.map(fn module ->
       [module, fn_name, fn_params]
     end)
