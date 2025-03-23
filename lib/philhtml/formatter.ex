@@ -46,10 +46,15 @@ defmodule PhilHtml.Formatter do
   defp do_formate_content(phtml) do
     options = Keyword.put(phtml.options, :metadata, phtml.metadata)
     phtml.content
-    |> Enum.map(fn {type, section, raws} ->
-      formate_section(type, %{content: section, raws: raws}, options)
+    |> Enum.map(fn {type, section, raws_or_params} ->
+      if type == :string do
+        formate_section(type, %{content: section, raws: raws_or_params}, options)
+      else
+        formate_section(type, %{content: section, params: raws_or_params}, options)
+      end
     end)
     |> Enum.join("\n")
+    |> IO.inspect(label: "Code après formate_section")
   end
 
   def formate_section(:raw, section, _options) do
@@ -67,9 +72,26 @@ defmodule PhilHtml.Formatter do
   end
 
   def formate_section(:code, section, _options) do
+    IO.inspect(section.params, label: "params Dans la section formate_section")
+    collector = %{content: section.content, pre: "<pre>", code: "<code>", options: []}
+    
+    collector =
+    String.split((section.params||""), " ")
+    |> Enum.reduce(collector, fn option, collector ->
+      # IO.inspect([option, content], label: "Option et content")
+      case option do
+      "remove_trailing_spaces" -> 
+        content = String.replace(collector.content, ~r/^\W+/m, "")
+        Map.merge(collector, %{content: content, options: collector.options ++ [option]})
+      "as_doc" -> 
+        Map.merge(collector, %{pre: ~s(<pre class="as_doc">), options: collector.options ++ [option]})
+      "" -> collector
+      end
+    end)
+    # |> IO.inspect(label: "Collector à la fin")
     """
-    <pre><code>
-    #{section.content}
+    #{collector.pre}#{collector.code}
+    #{collector.content}
     </code></pre>
     """
   end
@@ -103,7 +125,6 @@ defmodule PhilHtml.Formatter do
   end
 
   def replace_untouchable_codes(fcode, raws, _options) do
-    IO.inspect([fcode, raws], label: "liste")
     raws
     |> Enum.with_index()
     |> Enum.reduce(fcode, fn {raw, index}, fcode ->

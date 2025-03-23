@@ -71,8 +71,8 @@ defmodule PhilHtml.Parser do
 
   @reg_code_inline_phil   ~r/`(.+)`/U
   @reg_sections_heex_phil ~r/<\%\=(.+)\%>/U
-  @reg_sections_raw_html  ~r/^<(pre)>(<code(?:.+)<\/code>)<\/pre>/Usm
-  @reg_sections_code_html ~r/<(code)>(.+)<\/code>/U
+  @reg_blocs_code_in_html  ~r/^<(pre)>(<code(?:.+)<\/code>)<\/pre>/Usm
+  @reg_codes_inline_in_html ~r/<(code)>(.+)<\/code>/U
 
   @doc """
   Fonction qui prend le contenu du fichier .phil (hors front-matter) 
@@ -93,7 +93,8 @@ defmodule PhilHtml.Parser do
   doit seulement évaluer les codes heex.
   """
   def dispatch_html_content([content, options]) do
-    explode_content([content, options], [@reg_sections_raw_html, @reg_sections_code_html])
+    options = Keyword.put(options, :html_step, true)
+    explode_content([content, options], [@reg_blocs_code_in_html, @reg_codes_inline_in_html])
   end
 
   def explode_content([content, options], regex) do
@@ -119,7 +120,10 @@ defmodule PhilHtml.Parser do
           "`"   -> :inline_code
           _ -> String.to_atom(type)
         end
-        [params, code] = if Regex.match?(~r/\n/, code) do
+        # La marque de bloc peut être suivie de paramètre
+        # (mais seulement quand on passe du document phil au document
+        #  heex, pas quand on parse le document heex. pour l'évaluer)
+        [params, code] = if !options[:html_step] && Regex.match?(~r/\n/, code) do
           String.split(code, "\n", [parts: 2])
         else 
           # Par exemple pour le code entre backstick ou le code à

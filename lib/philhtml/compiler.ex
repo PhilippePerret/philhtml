@@ -64,7 +64,6 @@ defmodule PhilHtml.Compiler do
     |> String.replace(@reg_bloc_comments, "")
     |> String.replace(@reg_inline_comments, "")
     |> String.replace(@reg_multi_returns, @remp_multi_returns)
-    |> IO.inspect(label: "Après remplacement")
     %{phtml | raw_content: content}
   end
   

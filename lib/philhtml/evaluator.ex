@@ -32,7 +32,9 @@ defmodule PhilHtml.Evaluator do
       case type do
         :string -> evaluate_section(content, options)
         :code   -> "<code>#{content}</code>"
-        :pre    -> "<pre>#{content}</pre>"
+        :pre    -> 
+          IO.inspect(content, label: "Content à mettre dans le <pre>")
+          "<pre>#{content}</pre>"
       end
     end)
     |> Enum.join("\n")
