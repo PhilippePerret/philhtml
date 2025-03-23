@@ -8,6 +8,8 @@ defmodule PhilHtml.Parser do
 
   alias PhilHtml.Compiler
 
+  import SafeString
+
   @doc """
   @main
   Fonction principale qui parse le code d'un fichier .phil pour :
@@ -53,7 +55,19 @@ defmodule PhilHtml.Parser do
     %{ phtml | metadata: metadata}
   end
 
-  @reg_sections_raw_phil  ~r/^(raw)\:(.+)\:raw/Usm
+  # Deux expressions régulière pour traiter les blocs (html: code: 
+  # table: etc.). Dans la première, on ne relève que les blocs 
+  # `code:' car ceci peuvent contenir des exemples d'autres blocs qui
+  # en tout état de cause ne doivent pas être traités. Voir par exem-
+  # ple dans le manuel le bloc :
+  #   «««««««««««««««««««««««««««««««««««««««««
+  #   Pour définir les largeurs de colonnes :
+  #   code:
+  #   table: col_width=[]
+  #   »»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»
+  @reg_bloc_code_phil  ~r/^(code)\:(.+)\:code/Usm
+  @reg_blocs_phil  ~r/^(raw|table|html)\:(.+)\:\1/Usm
+
   @reg_code_inline_phil   ~r/`(.+)`/U
   @reg_sections_heex_phil ~r/<\%\=(.+)\%>/U
   @reg_sections_raw_html  ~r/^<(pre)>(<code(?:.+)<\/code>)<\/pre>/Usm
@@ -69,7 +83,7 @@ defmodule PhilHtml.Parser do
   @return [metadata, content{list}, options]
   """
   def explode_phil_content(phtml) when is_struct(phtml, PhilHtml) do
-    [content, _options] = explode_content([phtml.raw_content, phtml.options], [@reg_sections_raw_phil])
+    [content, _options] = explode_content([phtml.raw_content, phtml.options], [@reg_bloc_code_phil, @reg_blocs_phil])
     %{phtml | content: content}
   end
 
@@ -86,11 +100,11 @@ defmodule PhilHtml.Parser do
     # commence par une section :raw
     content = "\n\n\n" <> String.trim(content)
 
+    # On utilise toujours une liste d'expressions régulières
     regexes = cond do
       is_list(regex) -> regex
       true -> [regex]
     end
-
 
     data_content = 
     Enum.reduce(regexes, %{content: content, sections: []}, fn regex, accu -> 
@@ -101,10 +115,11 @@ defmodule PhilHtml.Parser do
       |> Enum.reduce(accu, fn [tout, type, code], collector ->
         type = case type do
           "<%"  -> :heex
-          "`"   -> :code # NON, ÇA CASSE LA LIGNE
+          "`"   -> :inline_code
           _ -> String.to_atom(type)
         end
-        section = {type, String.trim(code)}
+        [params, code] = String.split(code, "\n", [parts: 2])
+        section = {type, String.trim(code), String.trim(params)}
         %{
           content: String.replace(collector.content, tout, "$PHILSEP-#{Enum.count(collector.sections)}$"),
           sections: collector.sections ++ [section]
@@ -116,21 +131,22 @@ defmodule PhilHtml.Parser do
     sections = data_content.sections
     content  = data_content.content
 
+    # Pour spliter les blocs en les gardant dans l'ordre
     splited_content = 
     sections
     |> Enum.with_index()
-    |> Enum.reduce(content, fn {{type, content}, index}, collector ->
-      String.replace(collector, "\$PHILSEP-#{index}\$", "$PHILSEP$#{type}::#{content}$PHILSEP$")
+    |> Enum.reduce(content, fn {{type, content, params}, index}, collector ->
+      String.replace(collector, "\$PHILSEP-#{index}\$", "$PHILSEP$#{type}::#{params}::#{content}$PHILSEP$")
     end)
     |> String.split("$PHILSEP$")
     |> Enum.map(fn content -> 
       content = String.trim(content)
       if String.match?(content, ~r/^([a-z]+)::(.+)/) do
-        [type_section, content_section] = String.split(content, "::", [parts: 2, trim: true])
-        {String.to_atom(type_section), content_section, nil}
+        [type_section, params_section, content_section] = String.split(content, "::", [parts: 3, trim: false])
+        params_section = nil_if_empty(params_section)
+        {String.to_atom(type_section), content_section, params_section}
       else
         parse_raw_code_inline(content) # => {:string, content, [...]}
-        
       end
     end)
     |> Enum.filter(fn {_type, content, _raws} -> 
@@ -142,7 +158,7 @@ defmodule PhilHtml.Parser do
   end
 
   @doc """
-  Fonction qui reçoit le string +content+ d'un code à formater et
+  Fonction qui reçoit le string +content+ d'un texte à formater et
   met de côté les codes en ligne
 
   ## Examples

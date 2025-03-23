@@ -23,6 +23,23 @@ defmodule PhilHtml.ParseTest do
   end
 
   @tag :skip
+  test "un texte avec une section :code" do
+    source = """
+    Un texte.
+    code:
+    table: col_widths=[100, auto]
+    :code
+    Un autre texte
+    """
+    expected = [
+      {:string, "Un texte.", []},
+      {:code, "table: col_widths=[100, auto]", nil},
+      {:string, "Un autre texte", []}
+    ]
+    test_parsing(source, expected)
+  end
+
+  @tag :skip
   test "un texte avec une section :raw" do
     source = """
     Un texte.
@@ -35,6 +52,40 @@ defmodule PhilHtml.ParseTest do
       {:string, "Un texte.", []},
       {:raw, "Une section raw", nil},
       {:string, "Un autre texte", []}
+    ]
+    test_parsing(source, expected)
+  end
+
+  @tag :skip
+  test "un texte avec une section html:" do
+    source = """
+    Un Texte.
+    html: no_eval
+    <p>Un texte sans évaluation.</p>
+    :html
+    html:
+    <p>Un texte déjà mis en forme</p>
+    :html
+    Un autre texte
+    """
+    expected = [
+      {:string, "Un Texte.", []},
+      {:html, "<p>Un texte sans évaluation.</p>", "no_eval"},
+      {:html, "<p>Un texte déjà mis en forme</p>", nil},
+      {:string, "Un autre texte", []}
+    ]
+    test_parsing(source, expected)
+  end
+
+  @tag :skip
+  test "un texte avec une section table:" do
+    source = """
+    table: col_widths=[100,auto]
+    Celule 1 | Cellule 2
+    :table
+    """
+    expected = [
+      {:table, "Celule 1 | Cellule 2", "col_widths=[100,auto]"}
     ]
     test_parsing(source, expected)
   end

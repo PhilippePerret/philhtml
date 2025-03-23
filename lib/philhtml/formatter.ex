@@ -47,12 +47,26 @@ defmodule PhilHtml.Formatter do
     options = Keyword.put(phtml.options, :metadata, phtml.metadata)
     phtml.content
     |> Enum.map(fn {type, section, raws} ->
-      formated_code = formate_section(type, %{content: section, raws: raws}, options)
+      formate_section(type, %{content: section, raws: raws}, options)
     end)
     |> Enum.join("\n")
   end
 
   def formate_section(:raw, section, _options) do
+    """
+    #{section.content}
+    """
+  end
+
+  def formate_section(:table, section, _options) do
+    # Chaque cellule doit passer par treate_content/2
+    """
+    {LES table: SONT À TRAITER}
+    #{section.content}
+    """
+  end
+
+  def formate_section(:code, section, _options) do
     """
     <pre><code>
     #{section.content}
@@ -60,7 +74,13 @@ defmodule PhilHtml.Formatter do
     """
   end
 
-  def formate_section(:code, section, _options) do
+  def formate_section(:html, section, options) do
+    """
+    #{treate_content(section.content, options)}
+    """
+  end
+
+  def formate_section(:inline_code, section, _options) do
     """
     <code>#{section.content}</code>
     """
@@ -80,7 +100,6 @@ defmodule PhilHtml.Formatter do
     section.content
     |> build_as_html(options)
     |> replace_untouchable_codes(section.raws, options)
-
   end
 
   def replace_untouchable_codes(fcode, raws, _options) do
@@ -193,7 +212,8 @@ defmodule PhilHtml.Formatter do
   end
 
   @doc """
-  Traite du pur contenu
+  Traite du pur contenu. Tout ce qui est analysé comme du pur contenu 
+  doit passer par ici.
   """
   def treate_content(content, options) do
     content
