@@ -6,7 +6,7 @@ defmodule PhilHtml.Parser do
   - les codes à laisser tels quels
   """
 
-  alias PhilHtml.Compiler
+  alias PhilHtml.{Compiler, Evaluator}
 
   import SafeString
 
@@ -113,9 +113,7 @@ defmodule PhilHtml.Parser do
           "`"   -> :inline_code
           _ -> String.to_atom(type)
         end
-        # La marque de bloc peut être suivie de paramètre
-        # (mais seulement quand on passe du document phil au document
-        #  heex, pas quand on parse le document heex. pour l'évaluer)
+        # La marque de bloc peut être suivie de paramètres
         [params, code] = if Regex.match?(~r/\n/, code) do
           String.split(code, "\n", [parts: 2])
         else 
@@ -195,6 +193,44 @@ defmodule PhilHtml.Parser do
         new_raws    = raws ++ [{typereg, String.trim(code)}]
         {:string, new_content, new_raws}
       end)
+    end)
+  end
+
+
+  @doc """
+  Extrait les codes à évaluer au rendu.
+
+  Note : la fonction restore_render_evaluations_from(content, 
+          evaluations) produit le contraire.
+
+  @return [{String} content, {List} evaluation]
+  """
+  def extract_render_evaluations_from(content) do
+    Regex.scan(Evaluator.reg_phil_code_on_render, content)
+    |> Enum.reduce({content, []}, fn [tout, transformers, code], collector ->
+      {content, codes} = collector
+      code_mark = "PHIL#{Enum.count(codes)}CODE"
+      {
+        String.replace(content, tout, code_mark),
+        codes ++ [tout]
+      }
+    end)
+  end
+  @doc """
+  Remet les codes à évaluer au rendu dans le contenu
+
+  NB: Pas très idiomatique de la mettre ici (ça n'est pas du parsing,
+      mais ça se discute). Cf. la fonction ci-dessus.
+
+  @param {String} content Le contenu dans lequel il faut remettre les codes à évaluer au rendu
+  @param {List} codes Liste de duplet contenant l'intégralité du code, avec ses balises <:: ... ::>
+  """
+  def restore_render_evaluations(content, codes) do
+    codes
+    |> Enum.with_index()
+    |> Enum.reduce(content, fn {code, index}, content ->
+      code_mark = "PHIL#{index}CODE"
+      String.replace(content, code_mark, code)
     end)
   end
 

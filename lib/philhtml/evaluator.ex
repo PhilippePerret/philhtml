@@ -11,8 +11,9 @@ defmodule PhilHtml.Evaluator do
 
   # @reg_heex_variable ~r/<\%\=(.+?)\%>/
 
-  @reg_phil_code_on_compile ~r/<\:([rfc])?[ \n]+(.+)[ \n]+\:>/Um
-  @reg_phil_code_on_render ~r/<\:\:([rfc])?\w+(.+)\w+\:\:>/Um
+  @reg_phil_code_on_compile ~r/<\:([rfc])?[ \n]+(.+)[ \n]+\:>/Ums
+  @reg_phil_code_on_render ~r/<\:\:([rfc])?[ \n]+(.+)[ \n]+\:\:>/Ums
+  def reg_phil_code_on_render, do: @reg_phil_code_on_render
 
   @doc """
   Evalue le code <: ... :> à la compilation
@@ -37,11 +38,14 @@ defmodule PhilHtml.Evaluator do
   code évalué.
   """
   def evaluate_on_render(phtml) do
+    # IO.inspect(phtml.heex, label: "\n[evaluate_on_render] Code complet à évaluer")
     options = phtml.options
     phtml = %{phtml | html: phtml.heex}
     Regex.scan(@reg_phil_code_on_render, phtml.heex)
     |> Enum.reduce(phtml, fn [tout, transformers, content], phtml ->
+      # IO.inspect(content, label: "[evaluate_on_render] Code à évaluer")
       rempl = evaluate_code(content, transformers, options)
+      # IO.inspect(rempl, label: "[evaluate_on_render] Remplacement de `#{content}'")
       %{phtml | html: String.replace(phtml.html, tout, rempl)}
     end)
   end

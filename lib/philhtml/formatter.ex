@@ -64,12 +64,38 @@ defmodule PhilHtml.Formatter do
     """
   end
 
-  def formate_section(:table, section, _options) do
-    # Chaque cellule doit passer par treate_content/2
-    """
-    {LES table: SONT À TRAITER}
-    #{section.content}
-    """
+  # Formatage des tables
+  def formate_section(:table, section, options) do
+    # --- Préliminaires ---
+    # - Paramètres -
+    params = defaultize_params(:table, section.params)
+    # - Attributs de la table -
+    table_attrs = []
+    |> add_attrs_is_defined(:id, params)
+    |> add_attrs_is_defined(:class, params)
+    |> Enum.join(" ")
+    table_attrs = if table_attrs == "" do "" else " #{table_attrs}" end
+    # --- Fabrication de la table ---
+    table =
+    String.split(section.content, "\n")
+    |> Enum.map(fn tr -> 
+      # Traitement des lignes (TR)
+      String.split(tr, " | ")
+      |> Enum.map(fn cell ->
+        # Traitement des cellules (TD)
+        cell
+        |> treate_content(options)
+        |> Str.wrap_into("<td>", "</td>")
+        # |> IO.inspect(label: "CELL (finalisée)")
+      end)
+      |> Enum.join("")
+      |> Str.wrap_into("<tr>", "</tr>")
+    end)
+    |> Enum.join("\n")
+    |> add_column_settings(params)
+    |> Str.wrap_into(~s(<table#{table_attrs}>\n), "\n</table>")
+
+    table # @return
   end
 
   def formate_section(:code, section, _options) do
@@ -126,13 +152,12 @@ defmodule PhilHtml.Formatter do
   end
 
   def replace_untouchable_codes(fcode, raws, _options) do
-    IO.inspect(fcode, label: "fcode donné à replace_untouchable_codes")
-    IO.inspect(raws, label: "raws donnés à replace_untouchable_codes")
+    # IO.inspect(fcode, label: "fcode donné à replace_untouchable_codes")
+    # IO.inspect(raws, label: "raws donnés à replace_untouchable_codes")
     raws
     |> Enum.with_index()
     |> Enum.reduce(fcode, fn {raw, index}, fcode ->
       tag = "$PHILHTML#{index}$"
-      IO.inspect(raw, label: "raw pour #{tag}")
       case raw do
         {:code, rempl} -> String.replace(fcode, tag, ~s(<code>#{rempl}</code>))
         {:raw,  rempl} -> String.replace(fcode, tag, ~s(<pre><code>#{rempl}</code></pre>))
@@ -538,7 +563,10 @@ defmodule PhilHtml.Formatter do
 
   @doc """
   Traite du pur contenu. Tout ce qui est analysé comme du pur contenu 
-  doit passer par ici.
+  doit passer par ici. Mais attention : quand le contenu +content+ 
+  vient par exemple de cellules de tableau, il peut contenir du code
+  qui ne doit être évalué qu'au rendu (entre <:: ... ::>). Il faut
+  donc le mettre de côté pour le traitement et le remettre ensuite.  
 
   @param {String} content Le texte à tranformer
   @param {Keyword} options Les options éventuelles
@@ -546,6 +574,9 @@ defmodule PhilHtml.Formatter do
   @return {String} Le contenu modifié
   """
   def treate_content(content, options) do
+
+    {content, codes_at_render} = Parser.extract_render_evaluations_from(content)
+    
     content
     |> Evaluator.evaluate_on_compile(options)
     |> evaluate_helpers_functions(options)
@@ -555,8 +586,9 @@ defmodule PhilHtml.Formatter do
     |> treate_alinks_in(options)
     |> treate_simple_formatages(options)
     |> formate_exposants(options)
+    |> Parser.restore_render_evaluations(codes_at_render)
+    # |> IO.inspect(label: "\n[Treate_content] Texte final")
   end
-
 
   @reg_indented_format ~r/#{Regex.source(@reg_amorce_attributes)}(?:\n(?:\t|  )(?:.+))+/m
 
@@ -637,6 +669,9 @@ defmodule PhilHtml.Formatter do
 
   ## Examples
 
+    iex> treate_simple_formatages("***gras et italique*** et **gras**", [])
+    ~s(<strong><em>gras et italique</em></strong> et <strong>gras</strong>)
+
     iex> treate_simple_formatages("*italic*", [])
     "<em>italic</em>"
 
@@ -663,6 +698,7 @@ defmodule PhilHtml.Formatter do
 
 
   """
+  @reg_gras_ital ~r/\*\*\*(.+)\*\*\*/U  ; @rempl_gras_ital "<strong><em>\\1</em></strong>"
   @reg_bolds ~r/\*\*(.+)\*\*/U    ; @remp_bolds "<strong>\\1</strong>"
   @reg_italics ~r/\*(.+)\*/U      ; @remp_italics "<em>\\1</em>"
   @reg_under ~r/__(.+)__/U        ; @remp_under "<u>\\1</u>"
@@ -672,6 +708,7 @@ defmodule PhilHtml.Formatter do
   
   def treate_simple_formatages(content, _options) do
     content
+    |> replace_in_string(@reg_gras_ital   , @rempl_gras_ital)
     |> replace_in_string(@reg_bolds       , @remp_bolds)
     |> replace_in_string(@reg_italics     , @remp_italics)
     |> replace_in_string(@reg_under       , @remp_under)
@@ -719,6 +756,116 @@ defmodule PhilHtml.Formatter do
       ""
     else
       " #{attributes}"
+    end
+  end
+
+  @doc """
+  Reçoit les paramètres en string, tels que définis dans le texte
+  (après une marque de formatage) et retourne une table.
+
+  Les paramètres peuvent être de deux formes : 
+  1) des mots seuls => options à True
+  2) des définitions séparées par un signe "=". Les valeurs sont 
+      évaluées à l'aide de StringTo.value
+
+  ## Examples
+
+    iex> params_string_to_params("option")
+    [option: true]
+
+    iex> params_string_to_params("var=valeur")
+    [var: "valeur"]
+
+    iex> params_string_to_params("var=val option var2=val2")
+    [var2: "val2", option: true, var: "val"]
+
+    iex> params_string_to_params("list=[1,2,3]")
+    [list: [1, 2, 3]]
+
+    iex> params_string_to_params("list=[100,auto]")
+    [list: [100, "auto"]]
+
+  @return {Map} La table des valeurs
+  """
+  def params_string_to_params(params, type \\ nil) do
+    (params||"")
+    |> String.split(" ")
+    |> Enum.reduce([], fn param, kwords ->
+      [key, value] = if String.match?(param, ~r/\=/) do
+        [key, value] = String.split(param, "=")
+        [key, StringTo.value(value)]
+      else [param, true] end
+
+      Keyword.put(kwords, String.to_atom(key), value)
+    end)
+  end
+
+  @default_params_per_type [
+    table: [id: nil, class: nil, col_widths: nil, col_classes: nil]
+  ]
+  def defaultize_params(type, params) do
+    params = params_string_to_params(params, type)
+    Keyword.merge(@default_params_per_type[type], params)
+  end
+
+  # Fonction qui reçoit les lignes (TR) de la table et qui, avant
+  # que ne soit ajoutés les wrappers "<table>...</table>", définit
+  # les colonnes si les paramètres le requiert.
+  # 
+  # @param {String} raws Le code des rangées (envoyé juste pour poursuivre le pipe)
+  # @param {Map} params Paramètres de fabrication de la table (cf. la fonction ci-dessus)
+  # 
+  # @return {String} Le code HTML ajouté si nécessaire.
+  defp add_column_settings(raws, params) do
+    colgroup =
+    if params[:col_widths] || params[:col_classes] do
+      cols_count = Enum.count(params[:col_widths] || params[:col_classes])
+      (0..(cols_count - 1)) 
+      |> Enum.map(fn index ->
+        col_attrs = []
+        col_attrs = if is_nil(params[:col_widths]) do col_attrs else
+          width = Enum.at(params[:col_widths], index)
+          width = cond do
+            is_integer(width) -> "#{width}px"
+            is_binary(width)  -> width
+            %{type: :pourcent} = width -> width.raw_value
+          end
+          col_attrs ++ [~s(width="#{width}")]
+        end
+        col_attrs = if is_nil(params[:col_classes]) do col_attrs else
+          css = params[:col_classes] |> String.split(".") |> String.join(" ")
+          col_attrs ++ [~s(class="#{css}")]
+        end
+
+        if Enum.count(col_attrs) == 0 do "" else
+          " " <> Enum.join(col_attrs, " ")
+        end
+
+      end)
+      |> Enum.map(fn col_attrs -> 
+        ~s(<col#{col_attrs} />)
+      end)
+      |> Enum.join("\n")
+      |> Str.wrap_into("<colgroup>\n", "\n</colgroup>\n")
+    else
+      "" # colgroup
+    end <> raws
+  end
+
+  @doc """
+  Ajoute à la liste d'attributs HTML +list+ la clé +key+ si elle est
+  définie dans la table +table+
+
+  @param {List} list La liste actuelle (vide en général)
+  @param {Atom} key La clé (le nom de l'attribut) 
+  @param {Map|Keyword} table La table de référence
+
+  @return Si +table+ ne contient pas +key+, on renvoie la liste telle
+  qu'elle est, sinon on ajoute ["<key>=\"<valeur key>\""]
+  """
+  def add_attrs_is_defined(list, key, table) do
+    if is_nil(table[key]) do list else
+      list ++ [~s(#{key}="#{table[key]}")]
     end
   end
 

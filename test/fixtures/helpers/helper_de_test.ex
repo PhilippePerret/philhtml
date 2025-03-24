@@ -6,6 +6,10 @@ defmodule HelperDeTest do
 
   """
 
+  def essai(str) do
+    "La fonction essai retourne ce qu’elle a reçu, #{str}."
+  end
+
   def mafonction() do
     ~s(Texte pour remplacer la fonction `mafonction/0')
   end

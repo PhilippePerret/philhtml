@@ -102,14 +102,10 @@ defmodule PhilHtml.Compiler do
   end
 
   def traite_fichiers_css(phtml) do
-    if is_nil(phtml.metadata[:css]) do phtml else
-      compile_css(phtml)
-    end
+    compile_css(phtml)
   end
   def traite_fichiers_javascript(phtml) do
-    if is_nil(phtml.metadata[:javascript]) do phtml else
-      compile_javascript(phtml)
-    end
+    compile_javascript(phtml)
   end
 
   def compile_css(phtml) do
