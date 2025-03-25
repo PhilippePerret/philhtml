@@ -8,7 +8,7 @@ defmodule PhilHtml.Parser do
 
   alias PhilHtml.{Compiler, Evaluator}
 
-  import SafeString
+  import UsefullMethods
 
   @sep "XxXxX"
 
@@ -232,6 +232,64 @@ defmodule PhilHtml.Parser do
       code_mark = "PHIL#{index}CODE"
       String.replace(content, code_mark, code)
     end)
+  end
+
+  @smalltag_to_realtag %{
+    ""  => "p", # par défaut
+    "p" => "p",
+    "d" => "div",
+    "q" => "quote",
+    "s" => "section",
+    "f" => "fieldset",
+    "l" => "label",
+  }
+
+  @reg_amorce_attributes ~r/^((?:[a-z]+|h[0-7])?)((?:[\.\#][a-zA-Z0-9_\-]+)+)?\:/
+  def reg_amorce_attributes, do: @reg_amorce_attributes
+  @reg_amorce_et_texte   ~r/#{Regex.source(@reg_amorce_attributes)}(.+)$/
+
+  @doc """
+  Reçoit le code d'un paragraphe et en extrait l'amorce dite "phil",
+  c'est-à-dire un tuplet contenant {:tag, :id, :class}
+
+  @param {String} content Le contenu du paragraphe (normalement non traité)
+  @param {Keyword} options  Les options. Contient notamment :default_tag
+
+  @return {content, phil_amorce} Le contenu dont a été retiré 
+          l'amorce "phil" et l'amorce elle-même {Keyword} avec les
+          propriété :tag {String}, :id {String} et :class {List}
+  """
+  def extract_phil_amorce(content, options) do
+    scanner = Regex.run(@reg_amorce_et_texte, content)
+    cond do
+      Enum.empty?(scanner) ->
+        {content, [tag: Keyword.get(options, :default_tag), id: nil, class: nil]}
+      true ->
+        [_tout, tag, selectors, content] = scanner
+        tag = nil_if_empty(tag)
+        tag = @smalltag_to_realtag[tag] || tag || Keyword.get(options, :default_tag)
+        selectors = extract_selectors_phil_from(selectors)
+        {
+          String.trim(content), 
+          [tag: tag, id: selectors[:id], class: selectors[:class]]
+        }
+    end
+  end
+
+
+  @str_selector "([a-zA-Z0-9_\-]+)"
+  @reg_id_selector ~r/\##{@str_selector}/
+  @reg_class_selector ~r/\.#{@str_selector}/
+  # Extrait les sélecteurs # (id) et . (class) de la chaine +str+
+  defp extract_selectors_phil_from(str) do
+    {str, id} = case Regex.run(@reg_id_selector, str) do
+      nil -> {str, nil}
+      [tout, id] -> {String.replace(str, tout, ""), id}
+    end
+    classes = Regex.scan(@reg_class_selector, str)
+    |> Enum.map(fn [tout, class] -> class end)
+    |> nil_if_empty()
+    [id: id, class: classes]
   end
 
 end

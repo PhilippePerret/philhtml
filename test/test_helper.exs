@@ -3,6 +3,7 @@ Code.require_file("./test/fixtures/helpers/helper_de_test.ex")
 ExUnit.start()
 
 defmodule PhilHtml.TestMethods do
+  use ExUnit.Case
 
   @doc """
   Ajoute l'entête commun à tous les codes formatés quand ils ne sont
@@ -25,6 +26,15 @@ defmodule PhilHtml.TestMethods do
     <meta charset=\"utf-8\">
     <link rel=\"stylesheet\" href=\"common.css\" />
     """ |> String.trim()
+  end
+
+  def test_cycle_complet(source, expected, options \\ []) do
+    actual = PhilHtml.to_html(source, options) |> String.trim()
+    expected = """
+    #{entete_code()}
+    #{expected}
+    """ |> String.trim()
+    assert(actual == expected)
   end
 
 end

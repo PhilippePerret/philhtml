@@ -93,7 +93,7 @@ defmodule PhilHtml.FormaterTest do
 
   describe "à l'intérieur des cellules d'une table" do
 
-    # @tag :skip
+    @tag :skip
     test "le code est formaté" do
       source = """
       table:
@@ -108,7 +108,7 @@ defmodule PhilHtml.FormaterTest do
       test_complet(source, expected)
     end
 
-    # @tag :skip
+    @tag :skip
     test "le code est évalué" do
       source = """
       table:

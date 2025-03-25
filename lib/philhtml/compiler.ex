@@ -5,8 +5,8 @@ defmodule PhilHtml.Compiler do
 
   Ça doit se faire juste avant l'évaluation.
   """
-  # require PhilHtml.UsefullMethods
-  import PhilHtml.UsefullMethods
+  # require UsefullMethods
+  import UsefullMethods
 
   @reg_pre_include ~r/^(?:pre\/)?inc(?:lude)?:(.+)$/Um
   # La première expression qui permet de retirer cette fonction qui

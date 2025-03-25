@@ -456,18 +456,6 @@ defmodule PhilHtml.Formatter do
     end
   end
 
-
-  @smalltag_to_realtag %{
-    ""  => "p", # par défaut
-    "p" => "p",
-    "d" => "div",
-    "q" => "quote",
-    "s" => "section"
-  }
-
-  @reg_amorce_attributes ~r/^((?:[pdqs]|h[0-7])?)((?:[\.\#][a-zA-Z0-9_\-]+)+)?\:/
-  @reg_amorce_et_texte   ~r/#{Regex.source(@reg_amorce_attributes)}(.+)$/
-
   @doc """
   Construit le contenu, en se servant si nécessaire des options (et 
   des métadonnées qui ont été ajoutées)
@@ -483,30 +471,11 @@ defmodule PhilHtml.Formatter do
 
   """
   def build_as_html(content, options \\ [options: []]) do
-
-    default_tag = Keyword.get(options, :default_tag, "p")
-
     content
     |> treate_returns()
     |> String.split("\n")
-    |> Enum.map(fn line ->
-      line = String.trim(line)
-      scanner = Regex.scan(@reg_amorce_et_texte, line)
-      # |> IO.inspect(label: "Scan de ligne '#{line}'")
-      cond do
-        line == "" -> nil
-        Enum.empty?(scanner) ->
-          ~s(<#{default_tag}>#{treate_content(line, options)}</#{default_tag}>)
-        true ->
-          scanner = Enum.at(scanner, 0)
-          [_tout, tag, selectors, content] = scanner
-          tag = @smalltag_to_realtag[tag] || tag
-          selectors = extract_attributes_from(selectors)
-          tag = tag == "" && "p" || tag
-          ~s(<#{tag}#{selectors}>#{treate_content(content, options)}</#{tag}>)
-      end
-    end)
-    |> Enum.filter(fn fline -> not is_nil(fline) end)
+    |> Enum.filter(fn line -> String.trim(line) != "" end)
+    |> Enum.map(fn line -> treate_content(line, options) end)
     |> Enum.join("\n")
 
   end
@@ -563,34 +532,61 @@ defmodule PhilHtml.Formatter do
 
   @doc """
   Traite du pur contenu. Tout ce qui est analysé comme du pur contenu 
-  doit passer par ici. Mais attention : quand le contenu +content+ 
-  vient par exemple de cellules de tableau, il peut contenir du code
-  qui ne doit être évalué qu'au rendu (entre <:: ... ::>). Il faut
-  donc le mettre de côté pour le traitement et le remettre ensuite.  
+  doit passer par ici.
 
-  @param {String} content Le texte à tranformer
+  Les codes à évaluer au rendu (entre <:: ... ::>) sont retirés en
+  début de traitement et remis à la fin.
+
+  Les amorces Phil de paragraphe (<tag>#<id>.<class>: ...) sont 
+  retirées au début du traitement et traités en fin de chaine quand
+  tout a été traité.
+  span.error:Mon erreur => <span class="error">Mon erreur</span>
+
+  Notes
+  -----
+    [N1]  Si on met du code HTML avant, les '<' et '>' seront 
+          supprimés (on perdra donc complètement le formatage en
+          HTML).
+
+  @param {String} content Le texte à tranformer peut-être multi-lignes.
   @param {Keyword} options Les options éventuelles
 
   @return {String} Le contenu modifié
   """
   def treate_content(content, options) do
-
+    IO.inspect(content, label: "\n-> treate_content avec content")
     {content, codes_at_render} = Parser.extract_render_evaluations_from(content)
+    {content, phil_amorce} = Parser.extract_phil_amorce(content, options)
     
     content
     |> Evaluator.evaluate_on_compile(options)
     |> evaluate_helpers_functions(options)
     # À partir d'ici on formate/corrige vraiment le texte
     |> formate_smart_guillemets(options)
-    |> pose_anti_wrappers(options)
+    |> pose_anti_wrappers(options) # Attention : [N1]
     |> treate_alinks_in(options)
     |> treate_simple_formatages(options)
     |> formate_exposants(options)
+    |> treate_phil_amorce(phil_amorce, options)
     |> Parser.restore_render_evaluations(codes_at_render)
     # |> IO.inspect(label: "\n[Treate_content] Texte final")
   end
 
-  @reg_indented_format ~r/#{Regex.source(@reg_amorce_attributes)}(?:\n(?:\t|  )(?:.+))+/m
+  @doc """
+  Traite le contenu +content+ (un paragraphe) avec l'amorce phil
+  +phil_amorce+ en respectant les options +options+
+
+  @param {String} content Un contenu de paragraphe entièrement mis en forme.
+  @param {Keyword} phil_amorce L'amorce du paragraphe. Définit :
+            :tag    {String} La balise à utiliser
+            :id     {String} L'identifiant
+            :class  {List} La liste des classes CSS
+  """
+  def treate_phil_amorce(content, phil_amorce, _options) do
+    content
+  end
+
+  @reg_indented_format ~r/#{Regex.source(Parser.reg_amorce_attributes())}(?:\n(?:\t|  )(?:.+))+/m
 
   @doc """
   Le texte du fichier peut contenir des formatages tels que :
@@ -730,33 +726,6 @@ defmodule PhilHtml.Formatter do
   # @param {Keyword} options Les options éventuelles.
   defp string_replace(string, regex, callback, _options) do
     Regex.replace(regex, string, callback)
-  end
-
-  defp extract_attributes_from(str) do
-    attributes = 
-    Regex.scan(~r/(?:([.#])([a-zA-Z0-9_\-]+))/, str) 
-    |> Enum.reduce(%{id: nil, class: ""}, fn [_tout, type, selector], collector -> 
-      [type, selector] 
-      if type == "." do
-        %{collector | class: collector.class <> selector <> " " }
-      else
-        %{collector | id: selector}
-      end
-    end)
-    # |> IO.inspect(label: "Comme table")
-    |> Enum.reduce("", fn {attr, value}, accu -> 
-      if is_nil(value) or String.trim(value) == "" do
-        accu
-      else
-        accu <> ~s( #{attr}="#{String.trim(value)}")
-      end
-    end)
-    |> String.trim()
-    if attributes == "" do
-      ""
-    else
-      " #{attributes}"
-    end
   end
 
   @doc """

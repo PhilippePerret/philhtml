@@ -47,21 +47,20 @@ defmodule SafeString do
     "bonjour"
 
   """
-  def nil_if_empty(string, options \\ [trim: false]) do
+  def nil_if_empty(foo, options \\ [trim: false]) when is_binary(foo) or is_nil(foo) do
     cond do
-    is_binary(string) -> 
-      trimed_string = String.trim(string)
-      if trimed_string == "" do
+    is_binary(foo) -> 
+      trimed_foo = String.trim(foo)
+      if trimed_foo == "" do
         nil
       else
         if options[:trim] do
-          trimed_string
+          trimed_foo
         else
-          string
+          foo
         end
       end
-    is_nil(string) -> nil
-    true -> raise "#{inspect(string)} ne peut pas être envoyé à SafeString.nil_if_empty"
+    is_nil(foo) -> nil
     end
   end
 
