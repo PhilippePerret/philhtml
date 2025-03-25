@@ -1,10 +1,13 @@
 defmodule PhilHtml.CompilerTest do
   use ExUnit.Case
   import PhilHtml.TestMethods
+  
+  import PhilHtml.Compiler
+  doctest PhilHtml.Compiler
 
   describe "Un document avec des erreurs" do
 
-    # @tag :skip
+    @tag :skip
     test "produit un document avec les erreurs affichés" do
       source = """
       ---

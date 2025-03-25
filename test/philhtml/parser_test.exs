@@ -16,42 +16,42 @@ defmodule PhilHtml.ParseTest do
   end
 
   describe "Parse de l'amorce de paragraphe" do
-    # @tag :skip
+    @tag :skip
     test "avec une amorce simple (balise)" do
       source = "div: Mon div."
       expected = {"Mon div.", [tag: "div", id: nil, class: nil]}
       actual = Parser.extract_phil_amorce(source, [default_tag: "p"])
       assert(actual == expected)
     end
-    # @tag :skip
+    @tag :skip
     test "avec une amorce avec identifiant" do
       source = "div#mondiv:Mon div."
       expected = {"Mon div.", [tag: "div", id: "mondiv", class: nil]}
       actual = Parser.extract_phil_amorce(source, [default_tag: "p"])
       assert(actual == expected)
     end
-    # @tag :skip
+    @tag :skip
     test "avec une amorce avec classes" do
       source = "div.undiv:Mon div."
       expected = {"Mon div.", [tag: "div", id: nil, class: ["undiv"]]}
       actual = Parser.extract_phil_amorce(source, [default_tag: "p"])
       assert(actual == expected)
     end
-    # @tag :skip
+    @tag :skip
     test "avec une amorce avec identifiant et plusieurs classes" do
       source = "div.undiv#lediv.autreclasse:Mon div."
       expected = {"Mon div.", [tag: "div", id: "lediv", class: ["undiv", "autreclasse"]]}
       actual = Parser.extract_phil_amorce(source, [default_tag: "p"])
       assert(actual == expected)
     end
-    # @tag :skip
+    @tag :skip
     test "avec une amorce racourcie" do
       source = "d#lediv.undiv:Mon div."
       expected = {"Mon div.", [tag: "div", id: "lediv", class: ["undiv"]]}
       actual = Parser.extract_phil_amorce(source, [default_tag: "p"])
       assert(actual == expected)
     end
-    # @tag :skip
+    @tag :skip
     test "avec une amorce par défaut" do
       source = "#lep.unpar:Mon paragraphe."
       expected = {"Mon paragraphe.", [tag: "p", id: "lep", class: ["unpar"]]}

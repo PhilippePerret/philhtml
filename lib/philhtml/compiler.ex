@@ -75,6 +75,70 @@ defmodule PhilHtml.Compiler do
     end
   end
 
+  @data_smart_phil_marks [
+    blocs: [
+      #     marks         remplacements
+      {[":::", ":::"], ["code:", ":code"]},
+      {["|||", "|||"], ["table:", ":table"]},
+      {["...", "..."], ["raw:", ":raw"]},
+      {["<<<", "<<<"], ["html:", ":html"]},
+      {["<<<", ">>>"], ["html:", ":html"]}
+    ],
+    inlines: []
+  ]
+  @doc """
+  Remplace les marques intelligentes (simplifiées) par les vraies
+  marque PhilHtml.
+  Par exemple, `:::' sera remplacé par 'code: ... :code'
+
+  ## Examples
+
+    iex> treate_smart_phil_marks("Avant\\n:::\\nMon code\\n:::\\nAprès", [])
+    ~s(Avant\\ncode:\\nMon code\\n:code\\nAprès)
+
+    iex> treate_smart_phil_marks("Avant\\n:::javascript\\nCode javascript.\\nAutre ligne\\n:::", [])
+    ~s(Avant\\ncode:javascript\\nCode javascript.\\nAutre ligne\\n:code)
+
+    # Les tables
+    iex> treate_smart_phil_marks("Avant\\n|||\\nCellule 1 | Cellule 2\\n|||\\nAprès", [])
+    ~s(Avant\\ntable:\\nCellule 1 | Cellule 2\\n:table\\nAprès)
+
+    # Les textes bruts
+    iex> treate_smart_phil_marks("...\\nTexte brut\\n...", [])
+    ~s(raw:\\nTexte brut\\n:raw)
+
+    iex> treate_smart_phil_marks("... para meters\\nTexte brut\\n...", [])
+    ~s(raw: para meters\\nTexte brut\\n:raw)
+
+    # Les codes html
+    iex> treate_smart_phil_marks("<<<\\n<code html>\\n<<<", [])
+    ~s(html:\\n<code html>\\n:html)
+
+    iex> treate_smart_phil_marks("<<< no_eval\\n<code html>\\n<<<", [])
+    ~s(html: no_eval\\n<code html>\\n:html)
+
+    iex> treate_smart_phil_marks("<<< no_eval\\n<code html>\\n>>>\\nAprès.", [])
+    ~s(html: no_eval\\n<code html>\\n:html\\nAprès.)
+
+  """
+  # @param {PhilHtml} phtml Le constructeur courant. Il contient tout ce qu'il faut, même les options courantes ou les metadata du code.
+  def treate_smart_phil_marks(%PhilHtml{} = phtml) do
+    %{phtml | raw_content: treate_smart_phil_marks(phtml.raw_content, phtml.options)}
+  end
+  # @param {String} content Le contenu à traiter
+  # @param {Keyword} options Les options (pourra contenir d'autres
+  # marques customisées par le programmeur)
+  def treate_smart_phil_marks(content, options) when is_binary(content) do
+    @data_smart_phil_marks[:blocs]
+    |> Enum.reduce(content, fn {marks, remplacements}, content ->
+      [starter, ender] = marks |> Enum.map(fn r -> Regex.escape(r) end)
+      [rempl_starter, rempl_ender] = remplacements
+      reg   = ~r/^#{starter}([^\n]*)(.+)\n#{ender}[ \t]*$/Ums
+      remp  =  "#{rempl_starter}\\1\\2\n#{rempl_ender}"
+      Regex.replace(reg, content, remp)
+    end)
+  end
+
   @doc """
   Fonction principale qui ajoute s'il le faut les assets pour 
   produire le code final.
