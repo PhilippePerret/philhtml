@@ -262,7 +262,7 @@ defmodule PhilHtml.Parser do
   def extract_phil_amorce(content, options) do
     scanner = Regex.run(@reg_amorce_et_texte, content)
     cond do
-      Enum.empty?(scanner) ->
+      is_nil(scanner) ->
         {content, [tag: Keyword.get(options, :default_tag), id: nil, class: nil]}
       true ->
         [_tout, tag, selectors, content] = scanner
