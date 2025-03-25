@@ -46,7 +46,11 @@ defmodule PhilHtml.Formatter do
     %{phtml | heex: do_formate_content(phtml)}
   end
   defp do_formate_content(phtml) do
-    options = Keyword.put(phtml.options, :metadata, phtml.metadata)
+    deftag = Keyword.get(phtml.metadata, :default_tag, "p")
+    options = Keyword.merge(phtml.options, [
+      metadata: phtml.metadata,
+      default_tag: deftag
+    ])
     phtml.content
     |> Enum.map(fn {type, section, raws_or_params} ->
       if type == :string do
@@ -116,10 +120,16 @@ defmodule PhilHtml.Formatter do
       "" -> collector
       end
     end)
+
+    # Finaliser le contenu
+    final_content = 
+    collector.content
+    |> String.replace("<", "&lt;")
+
     # |> IO.inspect(label: "Collector à la fin")
     """
     #{collector.pre}#{collector.code}
-    #{collector.content}
+    #{final_content}
     </code></pre>
     """
   end
@@ -143,12 +153,14 @@ defmodule PhilHtml.Formatter do
   end
 
   def formate_section(:string, section, options) do
-    metadata = Keyword.get(options, :metadata, [])
-    options = if metadata[:default_tag] do
-      Keyword.put(options, :default_tag, metadata[:default_tag])
-    else options end
     section.content
-    |> build_as_html(options)
+    |> treate_returns()
+    |> String.split("\n")
+    |> Enum.filter(fn line -> String.trim(line) != "" end)
+    |> Enum.map(fn line ->
+      treate_content(line, options) 
+    end)
+    |> Enum.join("\n")
     |> replace_untouchable_codes(section.raws, options)
   end
 
@@ -457,30 +469,6 @@ defmodule PhilHtml.Formatter do
     end
   end
 
-  @doc """
-  Construit le contenu, en se servant si nécessaire des options (et 
-  des métadonnées qui ont été ajoutées)
-
-  ## Examples
-
-    iex> build_as_html("h1:Un titre de niveau 1\\nh2:Un titre de niveau 2")
-    ~s(<h1>Un titre de niveau 1</h1>\\n<h2>Un titre de niveau 2</h2>)
-
-    # Défaut
-    iex> build_as_html("p:Un paragraphe\\nd:Un divide\\nq:Une citation\\ns:Une section\\n:Un par défaut")
-    ~s(<p>Un paragraphe</p>\\n<div>Un divide</div>\\n<quote>Une citation</quote>\\n<section>Une section</section>\\n<p>Un par défaut</p>)
-
-  """
-  def build_as_html(content, options \\ [options: []]) do
-    content
-    |> treate_returns()
-    |> String.split("\n")
-    |> Enum.filter(fn line -> String.trim(line) != "" end)
-    |> Enum.map(fn line -> treate_content(line, options) end)
-    |> Enum.join("\n")
-
-  end
-
   # ================================================================
   #                T A B L E   D E S   M A T I È R E S
   # ================================================================
@@ -568,7 +556,9 @@ defmodule PhilHtml.Formatter do
     |> treate_alinks_in(options)
     |> treate_simple_formatages(options)
     |> formate_exposants(options)
+    # |> IO.inspect(label: "Avant traitement des amorces phil (phil_amorce: #{inspect phil_amorce})")
     |> treate_phil_amorce(phil_amorce, options)
+    # |> IO.inspect(label: "APRÈS traitement des amorces phil")
     |> Parser.restore_render_evaluations(codes_at_render)
     # |> IO.inspect(label: "\n[Treate_content] Texte final")
   end
@@ -577,6 +567,14 @@ defmodule PhilHtml.Formatter do
   Traite le contenu +content+ (un paragraphe) avec l'amorce phil
   +phil_amorce+ en respectant les options +options+
 
+  # Examples
+
+    iex> treate_phil_amorce("contenu", [tag: nil, id: nil, class: nil], [])
+    "contenu"
+
+    iex> treate_phil_amorce("contenu", [tag: "p", id: nil, class: nil], [])
+    ~s(<p id="monp">contenu</p>)
+
   @param {String} content Un contenu de paragraphe entièrement mis en forme.
   @param {Keyword} phil_amorce L'amorce du paragraphe. Définit :
             :tag    {String} La balise à utiliser
@@ -584,7 +582,19 @@ defmodule PhilHtml.Formatter do
             :class  {List} La liste des classes CSS
   """
   def treate_phil_amorce(content, phil_amorce, _options) do
-    content
+    if is_nil(phil_amorce[:tag]) do content else
+      attrs = []
+      attrs = if is_nil(phil_amorce[:id]) do attrs else
+        attrs ++ [~s(id="#{phil_amorce[:id]}")]
+      end
+      attrs = if is_nil(phil_amorce[:class]) do attrs else
+        attrs ++ [~s(class="#{phil_amorce[:class]|>Enum.join(" ")}")]
+      end
+
+      attrs = if attrs == [] do "" else " #{attrs |> Enum.join(" ")}" end
+
+      "<#{phil_amorce[:tag]}#{attrs}>#{content}</#{phil_amorce[:tag]}>"
+    end
   end
 
   @reg_indented_format ~r/#{Regex.source(Parser.reg_amorce_attributes())}(?:\n(?:\t|  )(?:.+))+/m

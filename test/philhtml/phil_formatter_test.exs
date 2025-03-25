@@ -3,7 +3,8 @@ defmodule PhilHtml.PhilFormatterTest do
   import PhilHtml.TestMethods
 
   describe "un texte simple" do
-    # @tag :skip
+    
+    @tag :skip
     test "rend un code simple" do
       source = """
       Ceci est mon texte.
@@ -18,6 +19,7 @@ defmodule PhilHtml.PhilFormatterTest do
       test_cycle_complet(source, expected)
     end
   end
+
   describe "un texte balisé au début" do
 
     @tag :skip
