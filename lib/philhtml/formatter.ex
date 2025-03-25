@@ -157,7 +157,7 @@ defmodule PhilHtml.Formatter do
     raws
     |> Enum.with_index()
     |> Enum.reduce(fcode, fn {raw, index}, fcode ->
-      tag = "$PHILHTML#{index}$"
+      tag = "LIHP#{index}LMTH"
       case raw do
         {:code, rempl} -> String.replace(fcode, tag, ~s(<code>#{rempl}</code>))
         {:raw,  rempl} -> String.replace(fcode, tag, ~s(<pre><code>#{rempl}</code></pre>))

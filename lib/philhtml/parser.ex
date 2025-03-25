@@ -123,7 +123,7 @@ defmodule PhilHtml.Parser do
         end
         section = {type, String.trim(code), String.trim(params)}
         %{
-          content: String.replace(collector.content, tout, "$PHILSEP-#{Enum.count(collector.sections)}$"),
+          content: String.replace(collector.content, tout, "LIHP#{Enum.count(collector.sections)}SEP"),
           sections: collector.sections ++ [section]
         }
       end)
@@ -138,9 +138,9 @@ defmodule PhilHtml.Parser do
     sections
     |> Enum.with_index()
     |> Enum.reduce(content, fn {{type, content, params}, index}, collector ->
-      String.replace(collector, "\$PHILSEP-#{index}\$", "$PHILSEP$#{type}#{@sep}#{params}#{@sep}#{content}$PHILSEP$")
+      String.replace(collector, "LIHP#{index}SEP", "LIHPSEPLMTH#{type}#{@sep}#{params}#{@sep}#{content}LIHPSEPLMTH")
     end)
-    |> String.split("$PHILSEP$")
+    |> String.split("LIHPSEPLMTH")
     |> Enum.map(fn content -> 
       content = String.trim(content)
       if String.match?(content, ~r/^([a-z]+)#{@sep}(.+)/) do
@@ -169,16 +169,16 @@ defmodule PhilHtml.Parser do
     {:string, "simple string", []}
 
     iex> Parser.parse_raw_code_inline("String avec `code`.")
-    {:string, "String avec $PHILHTML0$.", [{:code, "code"}]}
+    {:string, "String avec LIHP0LMTH.", [{:code, "code"}]}
 
     iex> Parser.parse_raw_code_inline("`code``autre code`")
-    {:string, "$PHILHTML0$$PHILHTML1$", [{:code, "code"}, {:code, "autre code"}]}
+    {:string, "LIHP0LMTHLIHP1LMTH", [{:code, "code"}, {:code, "autre code"}]}
 
     iex> Parser.parse_raw_code_inline("String avec <%= heex_code %>.")
-    {:string, "String avec $PHILHTML0$.", [{:heex, "heex_code"}]}
+    {:string, "String avec LIHP0LMTH.", [{:heex, "heex_code"}]}
 
   @return un tuplet {:string, {String} content, {List} raws} où 
-  +content+ est le contenu avec des $PHILHTML<x>$ à la place des
+  +content+ est le contenu avec des LIHP<x>LMTH à la place des
   code en ligne et +raws+ est une liste de tuplet contenant des
     {:heex, code HEEX à évaluer au chargement}
     {:code, code à évaluer à la compilation}
@@ -189,7 +189,7 @@ defmodule PhilHtml.Parser do
       Regex.scan(regexpression, content)
       |> Enum.reduce(collector, fn [tout, code], datacontent ->
         {:string, content, raws} = datacontent
-        new_content = String.replace(content, tout, "$PHILHTML#{Enum.count(raws)}$")
+        new_content = String.replace(content, tout, "LIHP#{Enum.count(raws)}LMTH")
         new_raws    = raws ++ [{typereg, String.trim(code)}]
         {:string, new_content, new_raws}
       end)

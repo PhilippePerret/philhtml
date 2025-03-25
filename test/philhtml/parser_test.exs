@@ -113,7 +113,7 @@ defmodule PhilHtml.ParseTest do
     Un `texte` avec <%= "un code en ligne" %> pour voir.
     """
     expected = [
-      {:string, "Un $PHILHTML1$ avec $PHILHTML0$ pour voir.", [{:heex, ~s("un code en ligne")}, {:code, "texte"}]}
+      {:string, "Un LIHP1LMTH avec LIHP0LMTH pour voir.", [{:heex, ~s("un code en ligne")}, {:code, "texte"}]}
     ]
     test_parsing(source, expected)
   end 
