@@ -298,12 +298,6 @@ defmodule PhilHtml.Parser do
     iex> extract_phil_amorce("i:./path/to.jpg", [])
     {"./path/to.jpg", [tag: "img", id: nil, class: nil]}
 
-    # Traitement des amorces spéciales
-    
-    iex> extract_phil_amorce("img:./vers/image.jpg", [])
-    {"./vers/image.jpg", [tag: "img", id: nil, class: nil]}
-
-
   @param {String} content Le contenu du paragraphe (normalement non traité)
   @param {Keyword} options  Les options. Contient notamment :default_tag
 

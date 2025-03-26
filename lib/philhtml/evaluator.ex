@@ -95,7 +95,7 @@ defmodule PhilHtml.Evaluator do
       dmodule = module_helper_for?(fn_name, fn_params, options)
       cond do
         is_nil(dmodule) -> 
-          ~s(span.error:** Unknown function: #{fn_name}/#{Enum.count(StringTo.list(fn_params))})
+          ~s(<span class="error">** Unknown function: #{fn_name}/#{Enum.count(StringTo.list(fn_params))}</span>)
         true -> 
           [module, fn_name, fn_params] = dmodule
           evaluate_in(module, fn_name, fn_params)

@@ -76,8 +76,8 @@ defmodule PhilHtml.Formatter do
     params = defaultize_params(:table, section.params)
     # - Options -
     # Pour les cellules de tableau, aucun wrapper par défaut n'est
-    # ajouté.
-    options = Keyword.put(options, :no_wrappers, true)
+    # ajouté (phil amorce).
+    options = Keyword.put(options, :no_phil_amorce, true)
     # - Attributs de la table -
     table_attrs = []
     |> add_attrs_is_defined(:id, params)
@@ -289,41 +289,49 @@ defmodule PhilHtml.Formatter do
   ## Examples
 
     // Sans rien, ne change rien
-    iex> pose_anti_wrappers("bonjour tout le monde")
+    iex> pose_balises_nowrap("bonjour tout le monde")
     "bonjour tout le monde"
 
     // Mot unique, simple guillemets sans insécables
-    iex> pose_anti_wrappers("« bonjour »")
+    iex> pose_balises_nowrap("« bonjour »")
     T.h "<nowrap>« bonjour »</nowrap>"
     
     // Deux mots, simple guillemets sans insécables
-    iex> pose_anti_wrappers("« bonjour vous »")
+    iex> pose_balises_nowrap("« bonjour vous »")
     T.h "<nowrap>« bonjour</nowrap> <nowrap>vous »</nowrap>"
 
     // Plusieurs mots, simples guillemets sans insécables
-    iex> pose_anti_wrappers("« bonjour à tous »")
+    iex> pose_balises_nowrap("« bonjour à tous »")
     T.h "<nowrap>« bonjour</nowrap> à <nowrap>tous »</nowrap>"
 
-    iex> pose_anti_wrappers("bonjour !")
+    iex> pose_balises_nowrap("bonjour !")
     T.h "<nowrap>bonjour !</nowrap>"
 
-    iex> pose_anti_wrappers("bonjour !?!")
+    iex> pose_balises_nowrap("bonjour !?!")
     T.h "<nowrap>bonjour !?!</nowrap>"
 
-    iex> pose_anti_wrappers("bonjour vous !")
+    iex> pose_balises_nowrap("bonjour vous !")
     T.h "bonjour <nowrap>vous !</nowrap>"
 
-    iex> pose_anti_wrappers("bonjour vous !?")
+    iex> pose_balises_nowrap("bonjour vous !?")
     T.h "bonjour <nowrap>vous !?</nowrap>"
 
-    iex> pose_anti_wrappers("« bonjour à tous ! »")
+    iex> pose_balises_nowrap("« bonjour à tous ! »")
     T.h "<nowrap>« bonjour</nowrap> à <nowrap>tous ! »</nowrap>"
     
-    iex> pose_anti_wrappers("« bonjour à tous !?! »")
+    iex> pose_balises_nowrap("« bonjour à tous !?! »")
     T.h "<nowrap>« bonjour</nowrap> à <nowrap>tous !?! »</nowrap>"
     
-    iex> pose_anti_wrappers("« bonjour à tous » !")
+    iex> pose_balises_nowrap("« bonjour à tous » !")
     T.h "<nowrap>« bonjour</nowrap> à <nowrap>tous » !</nowrap>"
+
+    # Conserve les balises html existante
+    
+    iex> pose_balises_nowrap("<span>bonjour !</span>")
+    T.h "<nowrap><span>bonjour !</span></nowrap>"
+
+    iex> pose_balises_nowrap("<span>bonjour</span> !")
+    T.h "<nowrap><span>bonjour</span> !</nowrap>"
 
   """
 
@@ -347,8 +355,29 @@ defmodule PhilHtml.Formatter do
   @regex_insecable_guils ~r/([—–«] )?([—–«] )(.+?)( [—–!?:;»]+)( [—–!?:;»]+)?( [—–!?:;»]+)?/u
   @regex_insecable_tirets ~r/([—–])[  ](.+)[  ]([—–])/Uu
   @regex_insecable_ponct ~r/([^ ]+) ([!?:;]+?)/Uu   ; @rempl_insecable_ponct "<nowrap>\\1&nbsp;\\2</nowrap>"
-  @regex_inner_tag ~r/<(.+)>/U
-  def pose_anti_wrappers(string, options \\ []) do
+  @regex_inner_tag ~r/(<.+>)/U
+  # [N1] Pour pallier le problème de `<span>bonjour !</span>' trans-
+  # formé en `<nowrap><span>bonjour !</nowrap></span>', je me sers de
+  # ce hack. En fait, pour le faire proprement, il faudrait découper 
+  # suivant les conteneurs et non conteneurs et les traiter séparé-
+  # ment mais ça me semble un peu complexe pour le moment alors que
+  # ce hack peut faire l'affaire.
+  @regex_inversion ~r/<\/nowrap><\/([a-z]+)>/ ; @rempl_inversion "</\\1></nowrap>"
+
+  @regex_in_container ~r/<([a-z]+)(.*)>(.+)<\/\\1>/U
+  def pose_balises_nowrap(string, options \\ []) do
+    # Pour éviter que :
+    #   <span>bonjour !</span>"
+    # … soit traité en :
+    #   <nowrap><span>bonjour !</nowrap></span>
+    # … on découpe le string selon ses balises de container s'il en 
+    # contient
+    # 
+    if Regex.match?(@regex_in_container, string) do
+      # Ça me semble trop complexe pour le moment, je préfère ajouter
+      # le traitement des inversions
+    end
+
     string
     # On doit commencer par protéger toutes les espaces à l'intérieur
     # des balises
@@ -362,8 +391,11 @@ defmodule PhilHtml.Formatter do
     # |> string_replace(@regex_insecable_guils, options)
     |> string_replace(@regex_insecable_tirets, options)
     |> String.replace(@regex_insecable_ponct, @rempl_insecable_ponct)
+    # On traite les inversions possibles (cf. [N1])
+    |> String.replace(@regex_inversion, @rempl_inversion)
     # On remet les espaces à l'intérieur des balises
     |> String.replace("ESP_PSE", " ")
+
   end
 
 
@@ -544,12 +576,12 @@ defmodule PhilHtml.Formatter do
   @param {String} content Le texte à tranformer peut-être multi-lignes.
   @param {Keyword} options Les options éventuelles
                   Les options importantes ici sont :
-                  no_html_container:    Si true, aucune amorce phil par défaut ne sera appliqué
+                  no_phil_amorce:    Si true, aucune amorce phil par défaut ne sera appliqué
 
   @return {String} Le contenu modifié
   """
   def treate_content(content, options) do
-    IO.inspect(content, label: "\n-> treate_content avec content")
+    # IO.inspect(content, label: "\n-> treate_content avec content")
     {content, codes_at_render} = Parser.extract_render_evaluations_from(content)
     {content, phil_amorce} = Parser.extract_phil_amorce(content, options)      
     
@@ -558,12 +590,12 @@ defmodule PhilHtml.Formatter do
     |> evaluate_helpers_functions(options)
     # À partir d'ici on formate/corrige vraiment le texte
     |> formate_smart_guillemets(options)
-    |> pose_anti_wrappers(options) # Attention : [N1]
+    |> pose_balises_nowrap(options) # Attention : [N1]
     |> treate_alinks_in(options)
     |> treate_simple_formatages(options)
     |> formate_exposants(options)
     # |> IO.inspect(label: "Avant traitement des amorces phil (phil_amorce: #{inspect phil_amorce})")
-    |> treate_phil_amorce(phil_amorce, options)
+    |> apply_phil_amorce(phil_amorce, options)
     # |> IO.inspect(label: "APRÈS traitement des amorces phil")
     |> Parser.restore_render_evaluations(codes_at_render)
     # |> IO.inspect(label: "\n[Treate_content] Texte final")
@@ -575,15 +607,14 @@ defmodule PhilHtml.Formatter do
 
   # Examples
 
-    iex> treate_phil_amorce("contenu", [tag: nil, id: nil, class: nil], [])
+    iex> apply_phil_amorce("contenu", [tag: nil, id: nil, class: nil], [])
     "contenu"
 
-    iex> treate_phil_amorce("contenu", nil, [])
+    iex> apply_phil_amorce("contenu", nil, [])
     "contenu"
 
-    iex> treate_phil_amorce("contenu", [tag: "p", id: "monp", class: nil], [])
+    iex> apply_phil_amorce("contenu", [tag: "p", id: "monp", class: nil], [])
     ~s(<p id="monp">contenu</p>)
-
 
   @param {String} content Un contenu de paragraphe entièrement mis en forme.
   @param {Keyword} phil_amorce L'amorce du paragraphe. Définit :
@@ -591,7 +622,7 @@ defmodule PhilHtml.Formatter do
             :id     {String} L'identifiant
             :class  {List} La liste des classes CSS
   """
-  def treate_phil_amorce(content, phil_amorce, _options) do
+  def apply_phil_amorce(content, phil_amorce, _options) do
     cond do
     is_nil(phil_amorce)       -> content
     is_nil(phil_amorce[:tag]) -> content
