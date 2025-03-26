@@ -139,6 +139,15 @@ defmodule PhilHtml.Compiler do
     end)
   end
 
+
+
+  # ================================================================================
+  # ================================================================================
+  #                      P O S T - C O M P I L A T I O N
+  # ================================================================================
+  # ================================================================================
+
+
   @doc """
   Fonction principale qui ajoute s'il le faut les assets pour 
   produire le code final.
@@ -183,12 +192,17 @@ defmodule PhilHtml.Compiler do
       if css == :bad_css do
         add_error(phtml, "Invalid css: #{inspect css}")
       else
-        %{phtml | heex: css_tag(css) <> phtml.heex}
+        %{phtml | heex: css_tag(css, phtml.options) <> phtml.heex}
       end
     end)
   end
-  defp css_tag(relpath) do
-    ~s(<link rel="stylesheet" href="#{relpath}" />\n)
+  defp css_tag(relpath, options) do
+    if options[:compilation] === false do
+      ~s(<link rel="stylesheet" href="#{relpath}" />\n)
+    else
+      # On rassemble tout le code
+
+    end
   end
 
   def compile_javascript(phtml) do
@@ -202,13 +216,18 @@ defmodule PhilHtml.Compiler do
         if js == :bad_js do
           add_error(phtml, "Invalid value for js: #{inspect js}")
         else
-          %{phtml | heex: phtml.heex <> js_tag(js)}
+          %{phtml | heex: phtml.heex <> js_tag(js, phtml.options)}
         end
       end)
     else phtml end
   end
-  defp js_tag(relpath) do
-    ~s(\n<script defer src="#{relpath}"></script>)
+  defp js_tag(relpath, options) do
+    if options[:compilation] === false do
+      ~s(\n<script defer src="#{relpath}"></script>)
+    else
+      # On rassemble tout le code
+
+    end
   end
 
 

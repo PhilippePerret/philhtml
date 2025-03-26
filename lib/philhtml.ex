@@ -9,7 +9,7 @@ defmodule PhilHtml do
       dst: nil,         # Le fichier .html.heex
       require_update: false
       ],
-    options: nil, 
+    options: [compilation: false], 
     raw_content: nil, # Le code brut
     frontmatter: nil, # Le frontmatter
     raw_body:    nil, # Le code de corps brut
