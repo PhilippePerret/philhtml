@@ -74,6 +74,10 @@ defmodule PhilHtml.Formatter do
     # --- Préliminaires ---
     # - Paramètres -
     params = defaultize_params(:table, section.params)
+    # - Options -
+    # Pour les cellules de tableau, aucun wrapper par défaut n'est
+    # ajouté.
+    options = Keyword.put(options, :no_wrappers, true)
     # - Attributs de la table -
     table_attrs = []
     |> add_attrs_is_defined(:id, params)
@@ -539,13 +543,15 @@ defmodule PhilHtml.Formatter do
 
   @param {String} content Le texte à tranformer peut-être multi-lignes.
   @param {Keyword} options Les options éventuelles
+                  Les options importantes ici sont :
+                  no_html_container:    Si true, aucune amorce phil par défaut ne sera appliqué
 
   @return {String} Le contenu modifié
   """
   def treate_content(content, options) do
     IO.inspect(content, label: "\n-> treate_content avec content")
     {content, codes_at_render} = Parser.extract_render_evaluations_from(content)
-    {content, phil_amorce} = Parser.extract_phil_amorce(content, options)
+    {content, phil_amorce} = Parser.extract_phil_amorce(content, options)      
     
     content
     |> Evaluator.evaluate_on_compile(options)
@@ -572,8 +578,12 @@ defmodule PhilHtml.Formatter do
     iex> treate_phil_amorce("contenu", [tag: nil, id: nil, class: nil], [])
     "contenu"
 
-    iex> treate_phil_amorce("contenu", [tag: "p", id: nil, class: nil], [])
+    iex> treate_phil_amorce("contenu", nil, [])
+    "contenu"
+
+    iex> treate_phil_amorce("contenu", [tag: "p", id: "monp", class: nil], [])
     ~s(<p id="monp">contenu</p>)
+
 
   @param {String} content Un contenu de paragraphe entièrement mis en forme.
   @param {Keyword} phil_amorce L'amorce du paragraphe. Définit :
@@ -582,7 +592,10 @@ defmodule PhilHtml.Formatter do
             :class  {List} La liste des classes CSS
   """
   def treate_phil_amorce(content, phil_amorce, _options) do
-    if is_nil(phil_amorce[:tag]) do content else
+    cond do
+    is_nil(phil_amorce)       -> content
+    is_nil(phil_amorce[:tag]) -> content
+    true ->
       attrs = []
       attrs = if is_nil(phil_amorce[:id]) do attrs else
         attrs ++ [~s(id="#{phil_amorce[:id]}")]

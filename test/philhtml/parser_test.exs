@@ -2,6 +2,7 @@ defmodule PhilHtml.ParseTest do
   use ExUnit.Case
 
   alias PhilHtml.Parser
+  import PhilHtml.Parser
 
   doctest PhilHtml.Parser
 

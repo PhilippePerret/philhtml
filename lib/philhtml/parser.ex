@@ -238,10 +238,11 @@ defmodule PhilHtml.Parser do
     ""  => "p", # par défaut
     "p" => "p",
     "d" => "div",
-    "q" => "quote",
-    "s" => "section",
+    "q" => "blockquote",
+    "s" => "span",
     "f" => "fieldset",
     "l" => "label",
+    "i" => "img"
   }
 
   @reg_amorce_attributes ~r/^((?:[a-z]+|h[0-7])?)((?:[\.\#][a-zA-Z0-9_\-]+)+)?\:/
@@ -251,6 +252,57 @@ defmodule PhilHtml.Parser do
   @doc """
   Reçoit le code d'un paragraphe et en extrait l'amorce dite "phil",
   c'est-à-dire un tuplet contenant {:tag, :id, :class}
+
+  ## Examples
+
+    iex> extract_phil_amorce("contenu", [default_tag: "p"])
+    {"contenu", [tag: "p", id: nil, class: nil]}
+
+    iex> extract_phil_amorce("section:contenu", [])
+    {"contenu", [tag: "section", id: nil, class: nil]}
+
+    iex> extract_phil_amorce("s:contenu", [])
+    {"contenu", [tag: "span", id: nil, class: nil]}
+
+    iex> extract_phil_amorce("p#monpar: contenu", [])
+    {"contenu", [tag: "p", id: "monpar", class: nil]}
+
+    iex> extract_phil_amorce("d.monpar: contenu", [])
+    {"contenu", [tag: "div", id: nil, class: ["monpar"]]}
+
+    iex> extract_phil_amorce("q#citation.css1.css2: contenu", [])
+    {"contenu", [tag: "blockquote", id: "citation", class: ["css1", "css2"]]}
+
+    iex> extract_phil_amorce(":contenu", [no_phil_amorce: true])
+    {"contenu", [tag: nil, id: nil, class: nil]}
+
+    # Pour les diminutifs
+    iex> extract_phil_amorce("p:contenu", [])
+    {"contenu", [tag: "p", id: nil, class: nil]}
+    
+    iex> extract_phil_amorce("d:contenu", [])
+    {"contenu", [tag: "div", id: nil, class: nil]}
+
+    iex> extract_phil_amorce("s:contenu", [])
+    {"contenu", [tag: "span", id: nil, class: nil]}
+
+    iex> extract_phil_amorce("l:contenu", [])
+    {"contenu", [tag: "label", id: nil, class: nil]}
+
+    iex> extract_phil_amorce("q:contenu", [])
+    {"contenu", [tag: "blockquote", id: nil, class: nil]}
+
+    iex> extract_phil_amorce("f:contenu", [])
+    {"contenu", [tag: "fieldset", id: nil, class: nil]}
+
+    iex> extract_phil_amorce("i:./path/to.jpg", [])
+    {"./path/to.jpg", [tag: "img", id: nil, class: nil]}
+
+    # Traitement des amorces spéciales
+    
+    iex> extract_phil_amorce("img:./vers/image.jpg", [])
+    {"./vers/image.jpg", [tag: "img", id: nil, class: nil]}
+
 
   @param {String} content Le contenu du paragraphe (normalement non traité)
   @param {Keyword} options  Les options. Contient notamment :default_tag
@@ -262,17 +314,23 @@ defmodule PhilHtml.Parser do
   def extract_phil_amorce(content, options) do
     scanner = Regex.run(@reg_amorce_et_texte, content)
     cond do
-      is_nil(scanner) ->
+    is_nil(scanner) ->
+      # <= Pas d'amorce 
+      # => Amorce par défaut, sauf si options[:no_phil_amorce]
+      if options[:no_phil_amorce] do {content, nil} else
         {content, [tag: Keyword.get(options, :default_tag), id: nil, class: nil]}
-      true ->
-        [_tout, tag, selectors, content] = scanner
-        tag = nil_if_empty(tag)
-        tag = @smalltag_to_realtag[tag] || tag || Keyword.get(options, :default_tag)
-        selectors = extract_selectors_phil_from(selectors)
-        {
-          String.trim(content), 
-          [tag: tag, id: selectors[:id], class: selectors[:class]]
-        }
+      end
+    true ->
+      [_tout, tag, selectors, content] = scanner
+      selectors = extract_selectors_phil_from(selectors)
+      tag = nil_if_empty(tag)
+      tag = if options[:no_phil_amorce] == true and is_nil(tag) and is_nil(selectors[:id]) and is_nil(selectors[:class]) do nil else
+        @smalltag_to_realtag[tag] || tag || Keyword.get(options, :default_tag)
+      end
+      {
+        String.trim(content), 
+        [tag: tag, id: selectors[:id], class: selectors[:class]]
+      }
     end
   end
 
