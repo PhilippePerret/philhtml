@@ -73,8 +73,6 @@ defmodule PhilHtml.Parser do
 
   @reg_code_inline_phil   ~r/`(.+)`/U
   @reg_sections_heex_phil ~r/<\%\=(.+)\%>/U
-  @reg_blocs_code_in_html  ~r/^<(pre)>(<code(?:.+)<\/code>)<\/pre>/Usm
-  @reg_codes_inline_in_html ~r/<(code)>(.+)<\/code>/U
 
   @doc """
   Fonction qui prend le contenu du fichier .phil (hors front-matter) 
@@ -207,7 +205,7 @@ defmodule PhilHtml.Parser do
   """
   def extract_render_evaluations_from(content) do
     Regex.scan(Evaluator.reg_phil_code_on_render, content)
-    |> Enum.reduce({content, []}, fn [tout, transformers, code], collector ->
+    |> Enum.reduce({content, []}, fn [tout, _transformers, _code], collector ->
       {content, codes} = collector
       code_mark = "PHIL#{Enum.count(codes)}CODE"
       {
@@ -339,7 +337,7 @@ defmodule PhilHtml.Parser do
       [tout, id] -> {String.replace(str, tout, ""), id}
     end
     classes = Regex.scan(@reg_class_selector, str)
-    |> Enum.map(fn [tout, class] -> class end)
+    |> Enum.map(fn [_tout, class] -> class end)
     |> nil_if_empty()
     [id: id, class: classes]
   end

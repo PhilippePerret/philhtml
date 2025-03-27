@@ -21,11 +21,16 @@ defmodule PhilHtml.TestMethods do
 
   """
 
-  def entete_code do
-    """
-    <meta charset=\"utf-8\">
-    <link rel=\"stylesheet\" href=\"common.css\" />
-    """ |> String.trim()
+  def entete_code(compiler \\ false) do
+    ~s(<meta charset=\"utf-8\">\n) <>
+    if compiler do
+      path = Path.join(["assets", "css", "common.css"])
+      ~s(<style type="text/css">) <> File.read!(path) <> "</style>"
+    else
+      """
+      <link rel=\"stylesheet\" href=\"common.css\" />
+      """ 
+    end |> String.trim()
   end
 
   @doc """
@@ -38,6 +43,9 @@ defmodule PhilHtml.TestMethods do
         lire chaque fois ces documents). Donc, pour le moment on 
         force l'option compilation à false si elle n'est pas définie
         explicitement.
+
+    2.  Si +source+ est un chemin de fichier, on s'assure de détruire
+        le fichier .html fin de ne pas le charger par erreur.
   """
   def test_cycle_complet(source, expected, options \\ []) do
     # - Options -
@@ -45,12 +53,28 @@ defmodule PhilHtml.TestMethods do
       Keyword.put(options, :compilation, false)
     end
 
-    actual = PhilHtml.to_html(source, options) |> String.trim()
+    # - Destruction du fichier .html si nécessaire (cf. note 2) -
+    if File.exists?(source) do 
+      remove_html_file_from(source)
+    end
+
+    actual = PhilHtml.to_html(source, options) |> String.trim() |> String.replace("\n", "")
     expected = """
-    #{entete_code()}
+    #{entete_code(options[:compilation])}
     #{expected}
-    """ |> String.trim()
+    """ |> String.trim() |> String.replace("\n", "")
     assert(actual == expected)
   end
 
+
+  defp remove_html_file_from(source) do
+    html_file =
+      if Path.extname(source) == ".html" do source else
+        affix = Path.basename(source, Path.extname(source))
+        Path.join([Path.dirname(source), "#{affix}.html"])
+      end
+    if File.exists?(html_file) do
+      File.rm(html_file)
+    end
+  end
 end

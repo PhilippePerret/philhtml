@@ -1,0 +1,4 @@
+---
+css = [with_css_same_level.css]
+---
+Le fichier css se trouve à la même place que ce fichier .phil.

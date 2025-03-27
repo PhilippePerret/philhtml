@@ -811,7 +811,7 @@ defmodule PhilHtml.Formatter do
 
   @return {Map} La table des valeurs
   """
-  def params_string_to_params(params, type \\ nil) do
+  def params_string_to_params(params, _type \\ nil) do
     (params||"")
     |> String.split(" ")
     |> Enum.reduce([], fn param, kwords ->
@@ -841,7 +841,6 @@ defmodule PhilHtml.Formatter do
   # 
   # @return {String} Le code HTML ajouté si nécessaire.
   defp add_column_settings(raws, params) do
-    colgroup =
     if params[:col_widths] || params[:col_classes] do
       cols_count = Enum.count(params[:col_widths] || params[:col_classes])
       (0..(cols_count - 1)) 
@@ -857,7 +856,7 @@ defmodule PhilHtml.Formatter do
           col_attrs ++ [~s(width="#{width}")]
         end
         col_attrs = if is_nil(params[:col_classes]) do col_attrs else
-          css = params[:col_classes] |> String.split(".") |> String.join(" ")
+          css = params[:col_classes] |> String.split(".") |> Enum.join(" ")
           col_attrs ++ [~s(class="#{css}")]
         end
 

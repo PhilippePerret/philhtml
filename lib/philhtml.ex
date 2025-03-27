@@ -32,8 +32,9 @@ defmodule PhilHtml do
   @return {HTMLString} Le code formaté, évalué.
   """
   def to_html(foo, options) when is_binary(foo) do
-    # IO.puts "-> to_html avec un binaire et des options"
+    # IO.puts "\n-> to_html avec un binaire et des options"
     if File.exists?(foo) do
+      options = Keyword.put(options, :folder, Path.dirname(foo))
       file_to_html(foo, options)
     else
       to_html(%PhilHtml{raw_content: foo, options: options})

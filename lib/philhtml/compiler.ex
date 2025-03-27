@@ -129,7 +129,7 @@ defmodule PhilHtml.Compiler do
   # @param {String} content Le contenu à traiter
   # @param {Keyword} options Les options (pourra contenir d'autres
   # marques customisées par le programmeur)
-  def treate_smart_phil_marks(content, options) when is_binary(content) do
+  def treate_smart_phil_marks(content, _options) when is_binary(content) do
     @data_smart_phil_marks[:blocs]
     |> Enum.reduce(content, fn {marks, remplacements}, content ->
       [starter, ender] = marks |> Enum.map(fn r -> Regex.escape(r) end)
@@ -154,6 +154,7 @@ defmodule PhilHtml.Compiler do
   produire le code final.
   """
   def post_compile(phtml) when is_struct(phtml, PhilHtml) do
+    # IO.puts "\n-> post_compile"
     phtml
     |> traite_post_inclusion()
     |> traite_fichiers_css()
@@ -162,6 +163,7 @@ defmodule PhilHtml.Compiler do
   end
 
   def traite_post_inclusion(phtml) do
+    # IO.puts "\n-> traite_post_inclusion"
     Regex.scan(@reg_post_include_end, phtml.heex)
     |> Enum.reduce(phtml, fn [tout, relpath], phtml ->
       relpath = String.trim(relpath)
@@ -177,6 +179,7 @@ defmodule PhilHtml.Compiler do
   end
 
   def traite_fichiers_css(phtml) do
+    # IO.puts "\n-> traite_fichiers_css"
     compile_css(phtml)
   end
   def traite_fichiers_javascript(phtml) do
@@ -199,12 +202,20 @@ defmodule PhilHtml.Compiler do
     end)
   end
   defp css_tag(relpath, options) do
+    # IO.inspect(options, label: "\nOptions")
     if options[:compilation] === false do
       ~s(<link rel="stylesheet" href="#{relpath}" />\n)
     else
       # On rassemble tout le code
       path = Path.join(["assets", "css", relpath])
-      ~s(<style type="text/css">) <> File.read!(path) <> "</style>"
+      path = if File.exists?(path) do path else
+        Path.expand(Path.join([options[:folder], relpath]))
+      end
+      if File.exists?(path) do
+        ~s(<style type="text/css">) <> File.read!(path) <> "</style>"
+      else
+        ~s{<span class="error">** (ArgumentError) Unfound path: `#{relpath}'.</span>}
+      end
     end
   end
 
@@ -230,7 +241,14 @@ defmodule PhilHtml.Compiler do
     else
       # On rassemble tout le code
       path = Path.join(["assets", "js", relpath])
-      ~s(<script type="text/javascript">) <> File.read!(path) <> "</script>"
+      path = if File.exists?(path) do path else
+        Path.expand(Path.join([options[:folder], relpath]))
+      end
+      if File.exists?(path) do
+        ~s(<script type="text/javascript">) <> File.read!(path) <> "</script>"
+      else
+        ~s{<span class="error">** (ArgumentError) Unfound path: `#{relpath}'.</span>}
+      end
     end
   end
 

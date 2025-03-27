@@ -4,7 +4,7 @@ defmodule PhilHtml.Evaluator do
   formaté
   """
 
-  alias PhilHtml.Parser
+  # alias PhilHtml.Parser
 
   import UsefullMethods
 
@@ -71,7 +71,7 @@ defmodule PhilHtml.Evaluator do
   @param {List} options.helpers   Les helpers à utiliser (ajoutés au helper par défaut PhilHtml.Helpers)
   @param {Map}  options.variables Des variables définies
   """
-  def evaluate_code(content, transformers, options) do
+  def evaluate_code(content, _transformers, options) do
     options = if options[:variables] do options else
       Keyword.put(options, :variables, [])
     end
