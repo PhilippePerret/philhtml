@@ -111,7 +111,7 @@ defmodule PhilHtml.Evaluator do
 
   def evaluate_code_as(:elixir, content, options) do
     # IO.inspect(content, label: "Contenu elixir à évaluer")
-    # IO.inspect(options[:variables], label: "Variables")
+    # IO.inspect(options, label: "\nOptions")
     {result, _variables} = Code.eval_string(content, options[:variables])
     result
   end

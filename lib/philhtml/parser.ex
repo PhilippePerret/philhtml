@@ -30,17 +30,22 @@ defmodule PhilHtml.Parser do
   end
 
   def split_front_matter(phtml) when is_struct(phtml, PhilHtml) do
-    parts = String.split(String.trim(phtml.raw_content), "---", [parts: 3])
-    if Enum.count(parts) == 3 do
-      # <= Il y a un front-matter
-      # => On ne prend que les parties utiles
-      [_rien | usefull_parts] = parts
-      Map.merge(phtml, %{
-        frontmatter:  Enum.at(usefull_parts, 0),
-        body:         Enum.at(usefull_parts, 1),
-        raw_content:  Enum.at(usefull_parts, 1)
-      })
-    else phtml end
+    if String.starts_with?(phtml.raw_content, "---") do
+      parts = String.split(String.trim(phtml.raw_content), "---", [parts: 3])
+      if Enum.count(parts) == 3 do
+        # <= Il y a un front-matter
+        # => On ne prend que les parties utiles
+        [_rien | usefull_parts] = parts
+        Map.merge(phtml, %{
+          frontmatter:  Enum.at(usefull_parts, 0),
+          body:         Enum.at(usefull_parts, 1),
+          raw_content:  Enum.at(usefull_parts, 1)
+        })
+      else phtml end
+    else
+      # Le code ne commence pas par "---"
+      phtml 
+    end
   end
 
   def front_matter_to_metadata(phtml) when is_struct(phtml, PhilHtml) do
@@ -55,7 +60,9 @@ defmodule PhilHtml.Parser do
         {String.to_atom(var), StringTo.value(value)}
       end)
     end
-    %{ phtml | metadata: metadata}
+    options = phtml.options
+    options = Keyword.put(options, :variables, (options[:variables] || []) ++ metadata)
+    Map.merge(phtml, %{metadata: metadata, options: options})
   end
 
   # Deux expressions régulière pour traiter les blocs (html: code: 
@@ -305,6 +312,7 @@ defmodule PhilHtml.Parser do
   """
   def extract_phil_amorce(content, options) do
     scanner = Regex.run(@reg_amorce_et_texte, content)
+    # IO.inspect(scanner, label: "Scanner (content = #{content})")
     cond do
     is_nil(scanner) ->
       # <= Pas d'amorce 

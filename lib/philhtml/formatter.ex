@@ -138,9 +138,11 @@ defmodule PhilHtml.Formatter do
     """
   end
 
+  # Dans un bloc :html, on corrige tous les containers
   def formate_section(:html, section, options) do
+    content = treate_content_into_html_content(section.content, options)
     """
-    #{treate_content(section.content, options)}
+    #{content}
     """
   end
 
@@ -167,6 +169,22 @@ defmodule PhilHtml.Formatter do
     |> Enum.join("\n")
     |> replace_untouchable_codes(section.raws, options)
   end
+
+
+  @reg_html_container ~r/<([a-z0-9]+)(.*)>(.+)<\/\1>/U
+
+  def treate_content_into_html_content(content, options) do
+    if Regex.match?(@reg_html_container, content) do
+      # IO.inspect(content, label: "Contenu AVEC html")
+      Regex.replace(@reg_html_container, content, fn tout, tag, inner_tag, content ->
+        "<#{tag}#{inner_tag}>" <> treate_content_into_html_content(content, options) <> "</#{tag}>"
+      end)
+    else
+      # IO.inspect(content, label: "Contenu SANS html")
+      treate_content(content, Keyword.put(options, :no_phil_amorce, true))
+    end
+  end
+
 
   def replace_untouchable_codes(fcode, raws, _options) do
     # IO.inspect(fcode, label: "fcode donné à replace_untouchable_codes")
