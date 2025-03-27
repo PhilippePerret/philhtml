@@ -1,5 +1,8 @@
 defmodule PhilHtmlTest do
   use ExUnit.Case
+
+  import PhilHtml.TestMethods
+
   doctest PhilHtml
 
   describe "avec du code" do
@@ -10,17 +13,15 @@ defmodule PhilHtmlTest do
       source = """
       Un simple texte.
       """
-      actual = PhilHtml.to_html(source)
       expected = "<p>Un simple texte.</p>"
-      assert(actual == expected)
+      test_cycle_complet(source, expected)
     end
 
     @tag :skip
     test "définissant un path inexistant (analysé en tant que code)" do
-      src = "/Users/qui/nexiste/pas.phil"
-      actual = PhilHtml.to_html(src)
+      source = "/Users/qui/nexiste/pas.phil"
       expected = "<p>/Users/qui/nexiste/pas.phil</p>"
-      assert(actual == expected)
+      test_cycle_complet(source, expected)
     end
 
     @tag :skip
@@ -36,8 +37,7 @@ defmodule PhilHtmlTest do
       <link rel="stylesheet" href="/autre_fichier.css" />
       <p>Ce code définit deux fichiers css.</p>
       """
-      actual = PhilHtml.to_html(source)
-      assert(actual == String.trim(expected))
+      test_cycle_complet(source, expected)
     end
 
     @tag :skip
@@ -53,8 +53,7 @@ defmodule PhilHtmlTest do
       <script defer src="/fichier.js"></script>
       <script defer src="/assets/autre_fichier.js"></script>
       """
-      actual = PhilHtml.to_html(source)
-      assert(actual == expected |> String.trim())
+      test_cycle_complet(source, expected)
     end
 
     @tag :skip
@@ -62,17 +61,16 @@ defmodule PhilHtmlTest do
       inclusion_path = Path.absname("./test/fixtures/textes/simple_include.phil")
       inclusion_post = Path.absname("./test/fixtures/textes/simple_post_include.phil")
       source = """
-      include(#{inclusion_path})
+      inc: #{inclusion_path}
       Du texte pour voir.
-      post/include(#{inclusion_post})
+      post/include: #{inclusion_post}
       """
       expected = """
       <p>Du texte simple inclus.</p>
       <p>Du texte pour voir.</p>
       Du texte inclus \#{à la fin} pour voir.
       """
-      actual = PhilHtml.to_html(source)
-      assert(actual == expected |> String.trim())
+      test_cycle_complet(source, expected)
     end
 
   end
@@ -104,13 +102,11 @@ defmodule PhilHtmlTest do
       <pre><code>
       Avec du code.
       </code></pre>
-      <p class="error">** (ArgumentError) File `mauvais/path' (fullpath: \"./test/fixtures/textes/mauvais/path\") unfound.</p>
+
+      <p class="error">** (ArgumentError) File `mauvais/path’ (fullpath: \"./test/fixtures/textes/mauvais/path\") unfound.</p>
       """
-
       remove_html_of_phil(source)
-
-      actual = PhilHtml.to_html(source)
-      assert(actual == expected |> String.trim())
+      test_cycle_complet(source, expected)
     end
   end
 

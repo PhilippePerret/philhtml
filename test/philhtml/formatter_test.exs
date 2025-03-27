@@ -12,14 +12,6 @@ defmodule PhilHtml.FormaterTest do
 
   doctest PhilHtml.Formatter
 
-
-  def test_complet(source, expected) do
-    source = source |> String.trim()
-    expected = entete_code() <> "\n" <> expected |> String.trim()
-    actual = PhilHtml.to_html(source, [helpers: [HelperDeTest]]) |> String.trim()
-    assert(actual == expected)
-  end
-
   describe "traitement de guillemets" do
 
     @tag :skip
@@ -36,7 +28,7 @@ defmodule PhilHtml.FormaterTest do
       "pour" voir
       </code></pre>
       """
-      test_complet(source, expected)
+      test_cycle_complet(source, expected)
     end
 
   end
@@ -51,17 +43,15 @@ defmodule PhilHtml.FormaterTest do
       cellule 1 | cellule 2
       :table
       Un autre paragraphe.
-      """ |> String.trim()
+      """
       expected = """
-      #{entete_code()}
       <p>Un simple paragraphe.</p>
       <table>
       <tr><td>cellule 1</td><td>cellule 2</td></tr>
       </table>
       <p>Un autre paragraphe.</p>
-      """ |> String.trim()
-      actual = PhilHtml.to_html(source)
-      assert(actual == expected)
+      """
+      test_cycle_complet(source, expected)
     end
 
 
@@ -86,7 +76,7 @@ defmodule PhilHtml.FormaterTest do
       </table>
       <p>Un autre paragraphe.</p>
       """
-      test_complet(source, expected)
+      test_cycle_complet(source, expected)
     end
 
   end #/describe
@@ -105,7 +95,7 @@ defmodule PhilHtml.FormaterTest do
       <tr><td>De l’<em>italique</em></td><td>du <strong>gras</strong></td><td>du <strong><em>gras italique</em></strong></td></tr>
       </table>
       """
-      test_complet(source, expected)
+      test_cycle_complet(source, expected)
     end
 
     @tag :skip
@@ -120,7 +110,7 @@ defmodule PhilHtml.FormaterTest do
       <tr><td>4</td><td>bonjour vous</td><td>La fonction essai retourne ce qu’elle a reçu, dans table.</td></tr>
       </table>
       """
-      test_complet(source, expected)
+      test_cycle_complet(source, expected, [helpers: [HelperDeTest]])
     end
 
   end #/describe

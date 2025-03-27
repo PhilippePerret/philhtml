@@ -26,6 +26,7 @@ defmodule PhilHtml.Compiler do
     phtml = 
     Regex.scan(@reg_pre_include, phtml.raw_content)
     |> Enum.reduce(phtml, fn [tout, relpath], phtml ->
+      relpath = String.trim(relpath)
       fullpath = maybe_fullpath(relpath, phtml)
       rempl = cond do
         File.exists?(relpath) -> File.read!(relpath)
@@ -163,6 +164,7 @@ defmodule PhilHtml.Compiler do
   def traite_post_inclusion(phtml) do
     Regex.scan(@reg_post_include_end, phtml.heex)
     |> Enum.reduce(phtml, fn [tout, relpath], phtml ->
+      relpath = String.trim(relpath)
       rempl = 
         if File.exists?(relpath) do
           File.read!(relpath)
@@ -201,7 +203,8 @@ defmodule PhilHtml.Compiler do
       ~s(<link rel="stylesheet" href="#{relpath}" />\n)
     else
       # On rassemble tout le code
-
+      path = Path.join(["assets", "css", relpath])
+      ~s(<style type="text/css">) <> File.read!(path) <> "</style>"
     end
   end
 
@@ -226,7 +229,8 @@ defmodule PhilHtml.Compiler do
       ~s(\n<script defer src="#{relpath}"></script>)
     else
       # On rassemble tout le code
-
+      path = Path.join(["assets", "js", relpath])
+      ~s(<script type="text/javascript">) <> File.read!(path) <> "</script>"
     end
   end
 
