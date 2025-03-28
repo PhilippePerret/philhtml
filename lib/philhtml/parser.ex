@@ -319,8 +319,10 @@ defmodule PhilHtml.Parser do
       # => Amorce par défaut, sauf si options[:no_phil_amorce]
       if options[:no_phil_amorce] do {content, nil} else
         {content, [tag: Keyword.get(options, :default_tag), id: nil, class: nil]}
+        |> IO.inspect(label: "Retour de extract_phil_amorce/2")
       end
     true ->
+      # Le paragraphe contient une amorce
       [_tout, tag, selectors, content] = scanner
       selectors = extract_selectors_phil_from(selectors)
       tag = nil_if_empty(tag)

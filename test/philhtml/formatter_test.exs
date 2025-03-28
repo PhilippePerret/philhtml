@@ -281,15 +281,15 @@ defmodule PhilHtml.FormaterTest do
       """
       expected = """
       <ul>
-      <li>Le premier item.
+      <li><div>Le premier item.</div>
       <pre><code></code>Une ligne de code dedans</pre></li>
-      <li>Deuxième item.
+      <li><div>Deuxième item.</div>
       <table>
       <tr><td>Cellule A1</td><td>Cellule B1</td></tr>
       <tr><td>Cellule A2</td><td>Cellule B2</td></tr>
       </table></li>
-      <li>Troisième item.
-      <p>Juste un paragraphe.</p></li>
+      <li><div>Troisième item.</div>
+      <div>Juste un paragraphe.</div></li>
       </ul>
       <p>Un paragraphe à la suite.</p>
       """

@@ -52,7 +52,8 @@ defmodule PhilHtml.Formatter do
     %{phtml | heex: do_formate_content(phtml)}
   end
   defp do_formate_content(phtml) do
-    deftag = Keyword.get(phtml.metadata, :default_tag, "p")
+    deftag = Keyword.get(phtml.metadata, :default_tag, phtml.options[:default_tag] || "p")
+    IO.inspect(deftag, label: "DEFAULT-TAG")
     options = Keyword.merge(phtml.options, [
       metadata: phtml.metadata,
       default_tag: deftag
@@ -67,6 +68,26 @@ defmodule PhilHtml.Formatter do
     end)
     |> Enum.join("\n")
     # |> IO.inspect(label: "Code après formate_section")
+  end
+
+  @doc """
+  Ensemble de fonctions qui formatent les blocs (et les blocs :string
+  qui sont les blocs par défaut contenant du texte)
+
+  @param {Atom} Type de la section (:string, :raw, :table, etc)
+  @param {Typlet} section Caractéristiques de la section, à savoir :content et :params
+  @param {Keyword} options Les options à prendre en compte.
+  """
+  def formate_section(:string, section, options) do
+    section.content
+    |> treate_returns()
+    |> String.split("\n")
+    |> Enum.filter(fn line -> String.trim(line) != "" end)
+    |> Enum.map(fn line ->
+      treate_content(line, options) 
+    end)
+    |> Enum.join("\n")
+    |> replace_untouchable_codes(section.raws, options)
   end
 
   def formate_section(:raw, section, _options) do
@@ -164,18 +185,6 @@ defmodule PhilHtml.Formatter do
     """
   end
 
-  def formate_section(:string, section, options) do
-    section.content
-    |> treate_returns()
-    |> String.split("\n")
-    |> Enum.filter(fn line -> String.trim(line) != "" end)
-    |> Enum.map(fn line ->
-      treate_content(line, options) 
-    end)
-    |> Enum.join("\n")
-    |> replace_untouchable_codes(section.raws, options)
-  end
-
   # Traitement d'un bloc list
   def formate_section(:list, section, options) do
     IO.inspect(section, label: "\nSECTION dans :list")
@@ -190,7 +199,7 @@ defmodule PhilHtml.Formatter do
       raw_li
       |> Str.sup_indent()
       # |> IO.inspect(label: "LI désindenté")
-      |> formate(options ++ [no_header: true])
+      |> formate(options ++ [no_header: true, default_tag: "div"])
       |> IO.inspect(label: "Retour de formate")
       |> Map.get(:heex)
       |> Str.wrap_into("<li>", "</li>")
