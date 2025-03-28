@@ -5,9 +5,15 @@ defmodule PhilHtml.Formatter do
   @doc """
   @main
 
-  @return {:ok|:error, rien|erreur}
+  @return {PhilHtml}
   @public
   """
+  # Cette fonction sert à formater complètement un simple string
+  # qui peut contenir n'importe quoi, et notamment des blocs. Elle
+  # a été affinée pour traiter le contenu des listes (dont les items
+  # peuvent contenir n'importe quoi.)
+  # Ajouter l'option [no_header: true] pour ne pas ajouter les
+  # css/js et la balise méta du charset.
   def formate(philcode, options) when is_binary(philcode) do
     formate(%PhilHtml{raw_content: philcode, options: options})
   end
@@ -170,13 +176,36 @@ defmodule PhilHtml.Formatter do
     |> replace_untouchable_codes(section.raws, options)
   end
 
+  # Traitement d'un bloc list
+  def formate_section(:list, section, options) do
+    IO.inspect(section, label: "\nSECTION dans :list")
+
+    type_list = String.match?((section.params||""), ~r/\bnumbered\b/) && "ol" || "ul"
+
+    section.content
+    |> Str.wrap_into("\n", "")
+    |> String.split("\n\* ")
+    |> Enum.filter(fn li -> String.trim(li) != "" end)
+    |> Enum.map(fn raw_li -> 
+      raw_li
+      |> Str.sup_indent()
+      # |> IO.inspect(label: "LI désindenté")
+      |> formate(options ++ [no_header: true])
+      |> IO.inspect(label: "Retour de formate")
+      |> Map.get(:heex)
+      |> Str.wrap_into("<li>", "</li>")
+    end)
+    |> Enum.join("\n")
+    |> Str.wrap_into("<#{type_list}>", "</#{type_list}>")
+  end
+
 
   @reg_html_container ~r/<([a-z0-9]+)(.*)>(.+)<\/\1>/U
 
   def treate_content_into_html_content(content, options) do
     if Regex.match?(@reg_html_container, content) do
       # IO.inspect(content, label: "Contenu AVEC html")
-      Regex.replace(@reg_html_container, content, fn tout, tag, inner_tag, content ->
+      Regex.replace(@reg_html_container, content, fn _tout, tag, inner_tag, content ->
         "<#{tag}#{inner_tag}>" <> treate_content_into_html_content(content, options) <> "</#{tag}>"
       end)
     else

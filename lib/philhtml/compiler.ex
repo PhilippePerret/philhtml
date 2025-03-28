@@ -83,7 +83,8 @@ defmodule PhilHtml.Compiler do
       {["|||", "|||"], ["table:", ":table"]},
       {["...", "..."], ["raw:", ":raw"]},
       {["<<<", "<<<"], ["html:", ":html"]},
-      {["<<<", ">>>"], ["html:", ":html"]}
+      {["<<<", ">>>"], ["html:", ":html"]},
+      {["***", "***"], ["list:", ":list"]}
     ],
     inlines: []
   ]
@@ -180,10 +181,14 @@ defmodule PhilHtml.Compiler do
 
   def traite_fichiers_css(phtml) do
     # IO.puts "\n-> traite_fichiers_css"
-    compile_css(phtml)
+    if phtml.options[:no_header] do phtml else
+      compile_css(phtml)
+    end
   end
   def traite_fichiers_javascript(phtml) do
-    compile_javascript(phtml)
+    if phtml.options[:no_header] do phtml else
+      compile_javascript(phtml)
+    end
   end
 
   def compile_css(phtml) do
@@ -260,27 +265,29 @@ defmodule PhilHtml.Compiler do
   res UTF8
   """
   def put_in_full_code_or_meta_charset(phtml) do
-    options = phtml.options
-    options =
-    if phtml.metadata[:full_code] do
-      Keyword.put(options, :full_code, true)
-    else options end
-    heex =
-    if options[:full_code] do
-      """
-      <html>
-        <head>
-          <meta charset="utf-8">
-          <title>Titre à définir</title>
-          </head>
-        <body>
-          #{phtml.heex}
-        </body>
-      </html>
-      """
-    else
-      ~s(<meta charset="utf-8">\n) <> phtml.heex
+    if phtml.options[:no_header] do phtml else
+      options = phtml.options
+      options =
+      if phtml.metadata[:full_code] do
+        Keyword.put(options, :full_code, true)
+      else options end
+      heex =
+      if options[:full_code] do
+        """
+        <html>
+          <head>
+            <meta charset="utf-8">
+            <title>Titre à définir</title>
+            </head>
+          <body>
+            #{phtml.heex}
+          </body>
+        </html>
+        """
+      else
+        ~s(<meta charset="utf-8">\n) <> phtml.heex
+      end
+      %{phtml | heex: heex}
     end
-    %{phtml | heex: heex}
   end
 end

@@ -10,10 +10,10 @@ defmodule Str do
 
   ## Examples
 
-    iex> Str.wrap_to("chaine", "AUT")
+    iex> Str.wrap_into("chaine", "AUT")
     "AUTchaineAUT"
 
-    iex> Str.wrap_to("chaine", "BEF", "AFT")
+    iex> Str.wrap_into("chaine", "BEF", "AFT")
     "BEFchaineAFT"
 
   @param {String} string La chaine à entourer
@@ -24,6 +24,28 @@ defmodule Str do
   """
   def wrap_into(string, bef_str, aft_str \\ nil) do
     bef_str <> string <> (aft_str || bef_str)
+  end
+
+  @doc """
+  Supprime l'indentation de toutes les lignes du contenu
+
+  ## Examples
+
+    iex> sup_indent("  une ligne")
+    "une ligne"
+
+    iex> sup_indent("\\tune ligne\\n\\tAutre ligne")
+    "une ligne\\nAutre ligne"
+
+    iex> sup_indent("  \\nUne ligne\\n   Autre ligne  \\n  Troisième ligne\\nQuatrième")
+    "Une ligne\\nAutre ligne\\nTroisième ligne\\nQuatrième"
+
+  """
+  def sup_indent(content, options \\ []) do
+    content
+    |> String.trim()
+    |> String.replace(~r/^[ \t ]+/m, "")
+    |> String.replace(~r/[ \t ]+$/m, "")
   end
 
 
