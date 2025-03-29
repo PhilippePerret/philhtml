@@ -19,6 +19,7 @@ defmodule PhilHtml.Formatter do
   end
   
   def formate(phtml) when is_struct(phtml, PhilHtml) do
+    # IO.inspect(phtml.options, label: "[formate] phtml.options")
     phtml
     |> Compiler.pre_compile(:first)
     |> Compiler.treate_smart_phil_marks()
@@ -53,7 +54,6 @@ defmodule PhilHtml.Formatter do
   end
   defp do_formate_content(phtml) do
     deftag = Keyword.get(phtml.metadata, :default_tag, phtml.options[:default_tag] || "p")
-    IO.inspect(deftag, label: "DEFAULT-TAG")
     options = Keyword.merge(phtml.options, [
       metadata: phtml.metadata,
       default_tag: deftag
@@ -187,20 +187,35 @@ defmodule PhilHtml.Formatter do
 
   # Traitement d'un bloc list
   def formate_section(:list, section, options) do
-    IO.inspect(section, label: "\nSECTION dans :list")
+    # IO.inspect(section, label: "\nSECTION dans :list")
 
     type_list = String.match?((section.params||""), ~r/\bnumbered\b/) && "ol" || "ul"
+
+    # Options formate s'il y a plusieurs paragraphes dans l'item
+    opts_multi_lines = options
+    |> Keyword.put(:default_tag, "div")
+    |> Keyword.put(:no_header, true)
+    # Options formate s'il y a un seul item dans l'item
+    opts_item_simple = options
+    |> Keyword.put(:no_header, true)
+    |> Keyword.put(:no_phil_amorce, true)
 
     section.content
     |> Str.wrap_into("\n", "")
     |> String.split("\n\* ")
     |> Enum.filter(fn li -> String.trim(li) != "" end)
     |> Enum.map(fn raw_li -> 
+
+      # Les options de formatage
+      opts_formate = if String.trim(raw_li) =~ ~r/\n/ do
+        opts_multi_lines
+      else opts_item_simple end
+
       raw_li
       |> Str.sup_indent()
       # |> IO.inspect(label: "LI désindenté")
-      |> formate(options ++ [no_header: true, default_tag: "div"])
-      |> IO.inspect(label: "Retour de formate")
+      |> formate(opts_formate)
+      # |> IO.inspect(label: "Retour de formate")
       |> Map.get(:heex)
       |> Str.wrap_into("<li>", "</li>")
     end)
@@ -638,6 +653,7 @@ defmodule PhilHtml.Formatter do
   """
   def treate_content(content, options) do
     # IO.inspect(content, label: "\n-> treate_content avec content")
+    # IO.inspect(options, label: "[treate_content] OPTIONS")
     {content, codes_at_render} = Parser.extract_render_evaluations_from(content)
     {content, phil_amorce} = Parser.extract_phil_amorce(content, options)      
     

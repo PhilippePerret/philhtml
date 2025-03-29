@@ -303,6 +303,9 @@ defmodule PhilHtml.Parser do
     iex> extract_phil_amorce("i:./path/to.jpg", [])
     {"./path/to.jpg", [tag: "img", id: nil, class: nil]}
 
+    iex> extract_phil_amorce("contenu", [default_tag: "span"])
+    {"contenu", [tag: "span", id: nil, class: nil]}
+
   @param {String} content Le contenu du paragraphe (normalement non traité)
   @param {Keyword} options  Les options. Contient notamment :default_tag
 
@@ -319,7 +322,7 @@ defmodule PhilHtml.Parser do
       # => Amorce par défaut, sauf si options[:no_phil_amorce]
       if options[:no_phil_amorce] do {content, nil} else
         {content, [tag: Keyword.get(options, :default_tag), id: nil, class: nil]}
-        |> IO.inspect(label: "Retour de extract_phil_amorce/2")
+        # |> IO.inspect(label: "Retour de extract_phil_amorce/2")
       end
     true ->
       # Le paragraphe contient une amorce

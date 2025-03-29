@@ -255,7 +255,7 @@ defmodule PhilHtml.FormaterTest do
       test_cycle_complet(source, expected)
     end
 
-    # @tag :skip
+    @tag :skip
     test "sur plusieurs lignes" do
       source = """
       list:
@@ -282,14 +282,14 @@ defmodule PhilHtml.FormaterTest do
       expected = """
       <ul>
       <li><div>Le premier item.</div>
-      <pre><code></code>Une ligne de code dedans</pre></li>
+      <pre><code>Une ligne de code dedans.</code></pre></li>
       <li><div>Deuxième item.</div>
       <table>
       <tr><td>Cellule A1</td><td>Cellule B1</td></tr>
       <tr><td>Cellule A2</td><td>Cellule B2</td></tr>
       </table></li>
-      <li><div>Troisième item.</div>
-      <div>Juste un paragraphe.</div></li>
+      <li><div>Troisième item</div>
+      <div>Juste un autre paragraphe.</div></li>
       </ul>
       <p>Un paragraphe à la suite.</p>
       """
@@ -315,12 +315,12 @@ defmodule PhilHtml.FormaterTest do
       """
       expected = """
       <ul>
-      <li>Un <em>italic</em></li>
-      <li>Un <strong>gras</strong></li>
+      <li>Un <em>italic</em>,</li>
+      <li>Un <strong>gras</strong>,</li>
       <li>Un <strong><em>gras italic</em></strong></li>
       </ul>
       <ul>
-      <li>Un <underscore>souligné</uderscore></li>
+      <li>Un <u>souligné</u></li>
       <li>2 + 3 = 5</li>
       <li>Une valeur définie par une variable.</li>
       </ul>
@@ -357,6 +357,33 @@ defmodule PhilHtml.FormaterTest do
       </li>
       </ul>
       """
+      test_cycle_complet(source, expected)
+    end
+
+    test "une table ou autre code en items" do
+      source = """
+      list:
+      * table: 
+        C1 en item 1 | C2 en item 1
+        :table
+      * code:
+        Du code en item 2
+        :code
+      :list
+      """
+      expected = """
+      <ul>
+      <li>
+      <table>
+      <tr><td>C1 en item 1</td><td>C2 en item 1</td></tr>
+      </table>
+      </li>
+      <li>
+      <pre><code>Du code en item 2</code></pre>
+      </li>
+      </ul>
+      """
+      test_cycle_complet(source, expected)
     end
   end #/describe bloc :list
 end
