@@ -76,7 +76,7 @@ defmodule PhilHtml.Parser do
   #   table: col_width=[]
   #   »»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»
   @reg_bloc_code_phil  ~r/^(code)\:(.+)\:code/Usm
-  @reg_blocs_phil  ~r/^(raw|table|html|list)\:(.+)\:\1/Usm
+  @reg_blocs_phil  ~r/^(raw|table|html|list)\:(.+)\n\:\1/Usm
 
   @reg_code_inline_phil   ~r/`(.+)`/U
   @reg_sections_heex_phil ~r/<\%\=(.+)\%>/U

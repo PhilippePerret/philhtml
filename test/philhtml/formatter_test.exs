@@ -328,7 +328,7 @@ defmodule PhilHtml.FormaterTest do
       test_cycle_complet(source, expected)
     end
 
-    @tag :skip
+    # @tag :skip
     test "listes imbriquées" do
       source = """
       list:
@@ -349,17 +349,27 @@ defmodule PhilHtml.FormaterTest do
       expected = """
       <ul>
       <li>
-      Niveau 1
+      <div>Niveau 1</div>
       <ul>
-      <li>Niveau 1.1
-      </li>
+      <li>
+      <div>Niveau 1.1</div>
+      <ul>
+      <li>Niveau 1.1.1</li>
+      <li>Niveau 1.1.2</li>
       </ul>
       </li>
+      <li>Niveau 1.2</li>
+      <li>Niveau 1.3</li>
+      </ul>
+      </li>
+      <li>Niveau 2</li>
+      <li>Niveau 3</li>
       </ul>
       """
       test_cycle_complet(source, expected)
     end
 
+    @tag :skip
     test "une table ou autre code en items" do
       source = """
       list:

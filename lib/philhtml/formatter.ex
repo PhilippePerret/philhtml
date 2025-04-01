@@ -185,9 +185,14 @@ defmodule PhilHtml.Formatter do
     """
   end
 
-  # Traitement d'un bloc list
+  # Traitement d'un bloc list. C'est le format le plus compliqué dans
+  # le sens où plusieurs blocs list peuvent être imbriqués l'un dans
+  # l'autre (et même d'autres blocs d'autres types, même si ça n'est
+  # pas le plus compliqué).
+  # Pour repérer les différents blocs :list, on s'appuie sur l'inden-
+  # tation
   def formate_section(:list, section, options) do
-    # IO.inspect(section, label: "\nSECTION dans :list")
+    IO.inspect(section, label: "\nSECTION dans :list")
 
     type_list = String.match?((section.params||""), ~r/\bnumbered\b/) && "ol" || "ul"
 
@@ -206,16 +211,38 @@ defmodule PhilHtml.Formatter do
     |> Enum.filter(fn li -> String.trim(li) != "" end)
     |> Enum.map(fn raw_li -> 
 
-      # Les options de formatage
-      opts_formate = if String.trim(raw_li) =~ ~r/\n/ do
+      # Ici, on est forcément sur un seul item de la liste, qui est
+      # soit composé de plusieurs lignes (donc peut contenir un autre
+      # bloc) soit composé d'une seule ligne
+      multi_lines = String.trim(raw_li) =~ ~r/\n/
+
+      # Les options de formatage (différentes en fonction de multi-
+      # ligne ou ligne unique)
+      opts_formate = if multi_lines do
         opts_multi_lines
       else opts_item_simple end
 
-      raw_li
-      |> Str.sup_indent()
+      # On part du principe que l'indentation d'une liste doit 
+      # toujours être de 2 (une tabulation ou deux espaces) ou
+      # peut-être aussi d'une valeur définissable par l'utilisateur.
+      # Donc, ici, on peut prendre toutes les lignes à partir du 3e
+      # caractère. Sauf pour la première ligne (contenant "* " au 
+      # départ, qui a été retiré lors de la découpe)
+      IO.inspect(raw_li, label: "raw_li")
+      
+      scroped_li =
+      if multi_lines do
+        raw_li 
+        |> String.split(~r/\n(\t|  )/)
+        |> Enum.join("\n")
+        |> IO.inspect(label: "scroped_li")
+      else raw_li end
+
+      scroped_li
+      # |> Str.sup_indent() # Je crois que ça casse toutes les imbrications des listes
       # |> IO.inspect(label: "LI désindenté")
       |> formate(opts_formate)
-      # |> IO.inspect(label: "Retour de formate")
+      |> IO.inspect(label: "Retour de formate")
       |> Map.get(:heex)
       |> Str.wrap_into("<li>", "</li>")
     end)
