@@ -1,14 +1,5 @@
-body {
-  font-size: 16pt;
-  margin: 2em;
-  width: 840px;
-  font-family: Avenir;
-}
-
 /* 
-
   ================= TITRES ==============
-  
 */
 h1, h2, h3, h4, h5, h6 {
   font-family: Arial, Helvetica;
