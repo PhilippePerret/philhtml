@@ -41,7 +41,7 @@ defmodule Str do
     "Une ligne\\nAutre ligne\\nTroisième ligne\\nQuatrième"
 
   """
-  def sup_indent(content, options \\ []) do
+  def sup_indent(content, _options \\ []) do
     content
     |> String.trim()
     |> String.replace(~r/^[ \t ]+/m, "")

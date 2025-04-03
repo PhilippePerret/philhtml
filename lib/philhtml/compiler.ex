@@ -191,9 +191,13 @@ defmodule PhilHtml.Compiler do
     end
   end
 
+  defp common_css_path do
+    Path.expand("#{__DIR__}../../../assets/css/common.css") |> Path.absname()
+  end
+
   def compile_css(phtml) do
     meta = phtml.metadata
-    css = ["common.css"] ++ (Keyword.get(meta, :css, []))
+    css = [common_css_path()] ++ (Keyword.get(meta, :css, []))
     cond do
       is_binary(css)  -> [css]
       is_list(css)    -> Enum.reverse(css)
@@ -212,13 +216,17 @@ defmodule PhilHtml.Compiler do
       ~s(<link rel="stylesheet" href="#{relpath}" />\n)
     else
       # On rassemble tout le code
-      path = Path.join(["assets", "css", relpath])
-      path = if File.exists?(path) do path else
-        Path.expand(Path.join([options[:folder], relpath]))
+      path_in_assets = Path.join(["assets", "css", relpath])
+      path = cond do
+        File.exists?(relpath) -> relpath
+        File.exists?(path_in_assets) -> path_in_assets
+        is_nil(options[:folder]) -> ":unable-path:"
+        true -> Path.expand(Path.join([options[:folder], relpath]))
       end
       if File.exists?(path) do
         ~s(<style type="text/css">) <> File.read!(path) <> "</style>"
       else
+        relpath = Path.absname(relpath)
         ~s{<span class="error">** (ArgumentError) Unfound path: `#{relpath}'.</span>}
       end
     end
@@ -245,9 +253,13 @@ defmodule PhilHtml.Compiler do
       ~s(\n<script defer src="#{relpath}"></script>)
     else
       # On rassemble tout le code
-      path = Path.join(["assets", "js", relpath])
-      path = if File.exists?(path) do path else
-        Path.expand(Path.join([options[:folder], relpath]))
+      path_in_assets = Path.join(["assets", "js", relpath])
+      path = 
+      cond do
+        File.exists?(relpath) -> relpath
+        File.exists?(path_in_assets) -> path_in_assets
+        is_nil(options[:folder]) -> ":unable-path:"
+        true -> Path.expand(Path.join([options[:folder], relpath]))
       end
       if File.exists?(path) do
         ~s(<script type="text/javascript">) <> File.read!(path) <> "</script>"
