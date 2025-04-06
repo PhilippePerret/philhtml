@@ -22,6 +22,7 @@ defmodule PhilHtml.Formatter do
     # IO.inspect(phtml.options, label: "[formate] phtml.options")
     phtml
     |> Compiler.pre_compile(:first)
+    |> Compiler.pre_compile(:inclusions)
     |> Compiler.treate_smart_phil_marks()
     |> Parser.parse()
     # |> IO.inspect(label: "\n\n[formate(phtml)] APRÈS PARSE")

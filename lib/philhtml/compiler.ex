@@ -22,6 +22,7 @@ defmodule PhilHtml.Compiler do
   def pre_compile(phtml, :first) when is_struct(phtml, PhilHtml) do
     phtml
   end
+  
   def pre_compile(phtml, :inclusions) when is_struct(phtml, PhilHtml) do
     phtml = 
     Regex.scan(@reg_pre_include, phtml.raw_content)

@@ -24,7 +24,6 @@ defmodule PhilHtml.Parser do
     phtml
     |> split_front_matter()
     |> front_matter_to_metadata()
-    |> Compiler.pre_compile(:inclusions)
     |> Compiler.pre_compile(:remove_comments)
     |> explode_phil_content()
   end
