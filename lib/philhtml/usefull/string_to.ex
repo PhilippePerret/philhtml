@@ -166,7 +166,7 @@ defmodule StringTo do
   end
 
   def list(foo) do
-    IO.inspect(foo, label: "\nN'est pas un string envoyé à StringTo.list")
+    # IO.inspect(foo, label: "\nN'est pas un string envoyé à StringTo.list")
     foo
   end
 

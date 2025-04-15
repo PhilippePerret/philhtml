@@ -14,6 +14,10 @@ h2 {
   letter-spacing: 0.3px;
 }
 
+p, div {
+  text-align: justify;
+}
+
 pre {
   border-radius: 0.5em;
   padding: 0 2em 2em;

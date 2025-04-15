@@ -41,13 +41,22 @@ defmodule PhilHtml.Evaluator do
     # IO.inspect(phtml.heex, label: "\n[evaluate_on_render] Code complet à évaluer")
     options = phtml.options
     phtml = %{phtml | html: phtml.heex}
+    no_evaluation = Keyword.get(options, :evaluation, true) === false
+    
     Regex.scan(@reg_phil_code_on_render, phtml.heex)
     |> Enum.reduce(phtml, fn [tout, transformers, content], phtml ->
       # IO.inspect(content, label: "[evaluate_on_render] Code à évaluer")
-      rempl = evaluate_code(content, transformers, options)
-      # IO.inspect(rempl, label: "[evaluate_on_render] Remplacement de `#{content}'")
+      rempl = 
+      if no_evaluation do
+        raw = if String.match?(transformers, ~r/c/), do: "raw ", else: ""
+        "<%= #{raw}#{content} %>"
+      else
+        evaluate_code(content, transformers, options)
+      end
+      # IO.inspect(rempl, label: "[evaluate_on_render] Remplacement de `<:: #{content} ::>'")
       %{phtml | html: String.replace(phtml.html, tout, rempl)}
     end)
+    # |> IO.inspect(label: "\n+++ phtml après évaluation au rendu")
   end
 
   @doc """

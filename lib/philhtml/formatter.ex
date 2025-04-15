@@ -40,7 +40,20 @@ defmodule PhilHtml.Formatter do
   def formate_file(phtml) when is_struct(phtml, PhilHtml) do
     phtml = %{phtml | raw_content: File.read!(phtml.file[:src])}
     phtml = formate(phtml)
-    File.write(phtml.file[:dst], phtml.heex)
+    # TODO
+    # Mais en fait, ci-dessous, ça n'est pas bon… Ça n'est pas une 
+    # question d'évaluation mais du fait que le code doit être 
+    # enregistré dans un fichier.
+    # Cf. les deux utilisations différentes de l'extension
+    #               
+    no_evaluation = Keyword.get(phtml.options, :evaluation, true) === false
+    code_final = if no_evaluation do
+      phtml = Evaluator.evaluate_on_render(phtml)
+      phtml.html
+    else
+      phtml.heex
+    end
+    File.write(phtml.file[:dst], code_final)
   end
 
   @doc """
