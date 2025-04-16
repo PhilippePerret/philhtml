@@ -38,10 +38,11 @@ defmodule PhilHtml.Formatter do
   problème.
   """
   def formate_file(phtml) when is_struct(phtml, PhilHtml) do
+    # IO.inspect(phtml, label: "\n\n[formate_file] PHTML")
     phtml = %{phtml | raw_content: File.read!(phtml.file[:src])}
     phtml = formate(phtml)
     # TODO
-    # Mais en fait, ci-dessous, ça n'est pas bon… Ça n'est pas une 
+    # Mais en fait, ci-dessous, ça n'est pas une 
     # question d'évaluation mais du fait que le code doit être 
     # enregistré dans un fichier.
     # Cf. les deux utilisations différentes de l'extension
@@ -206,7 +207,7 @@ defmodule PhilHtml.Formatter do
   # Pour repérer les différents blocs :list, on s'appuie sur l'inden-
   # tation
   def formate_section(:list, section, options) do
-    IO.inspect(section, label: "\nSECTION dans :list")
+    # IO.inspect(section, label: "\nSECTION dans :list")
 
     type_list = String.match?((section.params||""), ~r/\bnumbered\b/) && "ol" || "ul"
 
@@ -242,21 +243,21 @@ defmodule PhilHtml.Formatter do
       # Donc, ici, on peut prendre toutes les lignes à partir du 3e
       # caractère. Sauf pour la première ligne (contenant "* " au 
       # départ, qui a été retiré lors de la découpe)
-      IO.inspect(raw_li, label: "raw_li")
+      # IO.inspect(raw_li, label: "raw_li")
       
       scroped_li =
       if multi_lines do
         raw_li 
         |> String.split(~r/\n(\t|  )/)
         |> Enum.join("\n")
-        |> IO.inspect(label: "scroped_li")
+        # |> IO.inspect(label: "scroped_li")
       else raw_li end
 
       scroped_li
       # |> Str.sup_indent() # Je crois que ça casse toutes les imbrications des listes
       # |> IO.inspect(label: "LI désindenté")
       |> formate(opts_formate)
-      |> IO.inspect(label: "Retour de formate")
+      # |> IO.inspect(label: "Retour de formate")
       |> Map.get(:heex)
       |> Str.wrap_into("<li>", "</li>")
     end)
@@ -323,8 +324,11 @@ defmodule PhilHtml.Formatter do
   def evaluate_helpers_functions(code, options) do
     Regex.scan(@reg_helpers_functions, code)
     |> Enum.reduce(code, fn [tout, fn_name, fn_params], accu ->
-      rempl = 
-      case Evaluator.module_helper_for?(fn_name, fn_params, options) do
+      module_or_nil = Evaluator.module_helper_for?(fn_name, fn_params, options)
+      # |> IO.inspect(label: "module_or_nil (fonction :#{fn_name})")
+      # raise "pour voir module_or_nil"
+      rempl =
+      case module_or_nil do
         nil -> 
           arity = StringTo.list(fn_params) |> Enum.count()
           ~s(<span class="error">Unknown function `#{fn_name}/#{arity}'</span>)
@@ -648,7 +652,7 @@ defmodule PhilHtml.Formatter do
       Map.merge(phtml, %{heex: heex, tdm: tdm})
     end)
 
-    IO.inspect(phtml.tdm, label: "Tous les titres")
+    # IO.inspect(phtml.tdm, label: "Tous les titres")
 
     # Tous les titres de tdm sont dans phtml.tdm
     # On peut maintenant la mettre en forme
@@ -658,7 +662,7 @@ defmodule PhilHtml.Formatter do
     end)
     |> Enum.join("\n")
     ftdm = ~s(<section class="tdm-section">#{ftdm}</section>)
-    |> IO.inspect(label: "TDM FINALE")
+    # |> IO.inspect(label: "TDM FINALE")
 
     %{phtml | heex: String.replace(phtml.heex, @reg_tdm_mark, ftdm)}
   end

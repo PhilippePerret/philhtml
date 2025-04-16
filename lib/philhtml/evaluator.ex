@@ -20,6 +20,8 @@ defmodule PhilHtml.Evaluator do
 
   """
   def evaluate_on_compile(html, options) do
+    # IO.inspect(options, label: "OPTIONS DANS evaluate_on_compile")
+    # raise "Pour voir"
     Regex.scan(@reg_phil_code_on_compile, html)
     |> Enum.reduce(html, fn [tout, transformers, content], html ->
       rempl = evaluate_code(content, transformers, options)
@@ -81,9 +83,12 @@ defmodule PhilHtml.Evaluator do
   @param {Map}  options.variables Des variables définies
   """
   def evaluate_code(content, _transformers, options) do
-    options = if options[:variables] do options else
-      Keyword.put(options, :variables, [])
-    end
+    options = 
+      if options[:variables] do 
+        options 
+      else
+        Keyword.put(options, :variables, [])
+      end
     # IO.inspect(content, label: "\nContenu à évaluer…")
     # IO.inspect(options, label: "\navec les options…")
 
@@ -98,10 +103,12 @@ defmodule PhilHtml.Evaluator do
   @reg_function_with_args ~r/^([a-zA-Z_0-9\?\!]+)\((.*)\)$/Um
 
   def evaluate_code_as(:function, content, options) do
+    # IO.inspect(options, label: "[evaluate_code_as] OPTIONS")
     found_function = Regex.run(@reg_function_with_args, content)
     if is_nil(found_function) do nil else
       [_tout, fn_name, fn_params] = found_function
       dmodule = module_helper_for?(fn_name, fn_params, options)
+      # IO.inspect(dmodule, label: "MODULE trouvé pour #{fn_name}")
       cond do
         is_nil(dmodule) -> 
           ~s(<span class="error">** Unknown function: #{fn_name}/#{Enum.count(StringTo.list(fn_params))}</span>)
@@ -152,6 +159,7 @@ defmodule PhilHtml.Evaluator do
     module_helper_for?(fn_name, StringTo.list(fn_params), options)
   end
   def module_helper_for?(fn_name, fn_params, options) do
+    # IO.inspect(options, label: "OPTIONS POUR VOIR")
     arity  = Enum.count(fn_params)
 
     # IO.inspect(fn_name, label: "fn_name")
@@ -160,12 +168,14 @@ defmodule PhilHtml.Evaluator do
 
     # Liste de tous les modules
     (Keyword.get(options, :helpers, []) ++ [PhilHtml.Helpers])
+    # |> IO.inspect(label: "\n\n[philhtml] Liste des helpers")
     |> Enum.filter(fn module ->
+        # IO.inspect(module, label: "Test sur module")
         case Code.ensure_loaded(module) do
           {:error, _err} -> raise "Le module #{module} est inconnu…"
           _ -> 
             cond do
-              Kernel.function_exported?(module, fn_name, arity) -> 
+              Kernel.function_exported?(module, fn_name, arity) ->
                 true
               true ->
                 false
@@ -176,6 +186,7 @@ defmodule PhilHtml.Evaluator do
       [module, fn_name, fn_params]
     end)
     |> Enum.at(0, nil)
+    # |> IO.inspect(label: "MODULE CHOISI POUR #{fn_name}")
   end
 
 

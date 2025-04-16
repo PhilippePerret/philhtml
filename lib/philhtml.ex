@@ -122,7 +122,7 @@ defmodule PhilHtml do
   @return {HTMLString} Le code à afficher
   """
   def file_to_html(phtml)  when is_struct(phtml, PhilHtml) do
-    IO.puts "-> PhilHtml.to_html(#{inspect phtml})"
+    # IO.puts "-> PhilHtml.to_html(#{inspect phtml})"
     phtml
     |> treate_path()
     |> load_or_formate_path()
