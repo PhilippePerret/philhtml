@@ -22,4 +22,8 @@ defmodule HelperDeTest do
     "Mon application"
   end
 
+  def parti(lettre) do
+    "parti#{lettre}"
+  end
+
 end

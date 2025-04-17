@@ -397,6 +397,8 @@ defmodule PhilHtml.FormaterTest do
     end
   end #/describe bloc :list
 
+
+
   describe "fonction dans texte" do
 
     # @tag :skip
@@ -411,7 +413,7 @@ defmodule PhilHtml.FormaterTest do
     end
 
     # @tag :skip
-    test "ne doit pas être évaluée si directement dans texte" do
+    test "ne doit pas être évaluée si directement dans texte (sans : devant)" do
         # NB : Avant, on considérait que tout texte se présentant comme
       # une fonction était une fonction. Ça pose un problème avec les
       # texte par exemple inclusifs : "il ou elle est parti(e) sans…"
@@ -423,6 +425,17 @@ defmodule PhilHtml.FormaterTest do
       """
       expected = """
       <p>il ou elle est parti(e) sans laisser d’adresse.</p>
+      """
+      test_cycle_complet(source, expected)
+    end
+
+    # @tag :skip
+    test "doit être évaluée dans le texte si précédée de « : »" do
+      source = """
+      il ou elle est :parti(e) sans laisser d'adresse.
+      """
+      expected = """
+      <p>il ou elle est partie sans laisser d’adresse.</p>
       """
       test_cycle_complet(source, expected)
     end

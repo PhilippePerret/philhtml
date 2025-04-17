@@ -297,10 +297,19 @@ defmodule PhilHtml.Formatter do
   end
 
 
-  @reg_helpers_functions ~r/\b([a-zA-Z0-9_]+)\((.*)\)/U
+  @reg_helpers_functions ~r/\:([a-zA-Z0-9_]+)\((.*)\)/U
   @doc """
+  NOTE 
+  Avant, la fonction n'avait pas besoin d'être précédée de _
+  mais ce principe posait trop de problème pour les textes 
+  comme :
+    Il ou ell est parti(e) en Normandie.
+  Maintenant, si parti\1 est vraiment une fonction, on doit
+  écrire :
+    Il ou ell est :parti(e) en Normandie.
+  NOTE
   Le Phil-Formateur part du principe que tout texte de la forme :
-  'fonc_Tion(p)' — c'est-à-dire un string avec des minuscules, des
+  '_fonc_Tion(p)' — c'est-à-dire un string avec des minuscules, des
   majuscules et des traits plats, suivi d'une parenthèse ouverte,
   des arguments et une parenthèse fermée — est une fonction définie
   dans un helper.
@@ -310,15 +319,15 @@ defmodule PhilHtml.Formatter do
       dossier /test/fixtures/helpers/
       
       # Fonction commun (dans PhilHtml.Helpers)
-      iex> evaluate_helpers_functions("C'est mon p(chemin/acces) pour venir.", [])
+      iex> evaluate_helpers_functions("C'est mon :p(chemin/acces) pour venir.", [])
       ~s(C'est mon <span class="path">chemin/acces</span> pour venir.)
 
       # Fonction personnelle (dans module personnel)
-      iex> evaluate_helpers_functions("mafonction()", [helpers: [HelperDeTest]])
+      iex> evaluate_helpers_functions(":mafonction()", [helpers: [HelperDeTest]])
       ~s(Texte pour remplacer la fonction `mafonction/0')
 
       # Fonction inconnue
-      iex> evaluate_helpers_functions("mafonctioninexistante()", [helpers: [HelperDeTest]])
+      iex> evaluate_helpers_functions(":mafonctioninexistante()", [helpers: [HelperDeTest]])
       ~s(<span class="error">Unknown function `mafonctioninexistante/0'</span>)
   """
   def evaluate_helpers_functions(code, options) do
