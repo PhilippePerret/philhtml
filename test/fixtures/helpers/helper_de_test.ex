@@ -18,4 +18,8 @@ defmodule HelperDeTest do
     "Retour de mon helper"
   end
 
+  def app_name do
+    "Mon application"
+  end
+
 end

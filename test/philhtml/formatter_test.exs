@@ -396,4 +396,48 @@ defmodule PhilHtml.FormaterTest do
       test_cycle_complet(source, expected)
     end
   end #/describe bloc :list
+
+  describe "fonction dans texte" do
+
+    # @tag :skip
+    test "doit être évaluée dans <: ... :>" do
+      source = """
+      Le nom de l'application est <: app_name() :>.
+      """
+      expected = """
+      <p>Le nom de l’application est Mon application.</p>
+      """
+      test_cycle_complet(source, expected)
+    end
+
+    # @tag :skip
+    test "ne doit pas être évaluée si directement dans texte" do
+        # NB : Avant, on considérait que tout texte se présentant comme
+      # une fonction était une fonction. Ça pose un problème avec les
+      # texte par exemple inclusifs : "il ou elle est parti(e) sans…"
+      # où "parti" est pris pour une fonction. Imposer maintenant 
+      # l'utilisation de <: parti(e) :> si c'est vraiment une fonc-
+      # tion
+      source = """
+      il ou elle est parti(e) sans laisser d'adresse.
+      """
+      expected = """
+      <p>il ou elle est parti(e) sans laisser d’adresse.</p>
+      """
+      test_cycle_complet(source, expected)
+    end
+
+    # @tag :skip
+    test "si variable inconnue, l'essayer comme fonction sans args" do
+      source = """
+      <: app_name :> est le nom de l'application.
+      """
+      expected = """
+      <p>Mon application est le nom de l’application.</p>
+      """
+      test_cycle_complet(source, expected)
+    end
+
+  end
+
 end

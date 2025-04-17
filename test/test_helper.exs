@@ -27,8 +27,9 @@ defmodule PhilHtml.TestMethods do
       path = Path.join(["assets", "css", "common.css"])
       ~s(<style type="text/css">) <> File.read!(path) <> "</style>"
     else
+      # path = Path.expand
       """
-      <link rel=\"stylesheet\" href=\"common.css\" />
+      <link rel=\"stylesheet\" href=\"#{Path.expand(Path.join([__DIR__, ".."]))}/assets/css/common.css\" />
       """ 
     end |> String.trim()
   end
@@ -51,6 +52,18 @@ defmodule PhilHtml.TestMethods do
     # - Options -
     options = if Keyword.has_key?(options, :compilation) do options else
       Keyword.put(options, :compilation, false)
+    end
+
+    # On ajoute toujours les helpers, sauf si on ne doit pas
+    options = 
+    if options[:no_helpers] do options else
+      if Keyword.has_key?(options, :helpers) do
+        if Enum.member?(options.helpers, HelperDeTest) do options else
+          Keyword.put(options, :helpers, options.helpers ++ [HelperDeTest])
+        end
+      else
+        Keyword.put(options, :helpers, [HelperDeTest])
+      end
     end
 
     # - Destruction du fichier .html si nécessaire (cf. note 2) -
