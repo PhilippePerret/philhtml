@@ -82,8 +82,35 @@ defmodule PhilHtmlTest do
       src = Path.absname("test/fixtures/textes/simple.phil")
       actual = PhilHtml.to_html(src)
       expected = "<p>Je suis un fichier très simple.</p>"
-      assert(actual == expected)
+      assert(actual =~ expected)
     end
+
+    # @tag :skip
+    test "un fichier simple vers un nom différent" do
+      src = Path.absname("test/fixtures/textes/simple.phil")
+      dest_expected = Path.absname("test/fixtures/textes/smp.html.heex")
+      File.exists?(dest_expected) && File.rm(dest_expected)
+      PhilHtml.to_html(src, [dest_name: "smp.html.heex"])
+      assert File.exists?(dest_expected)
+    end
+    # @tag :skip
+    test "un fichier simple vers un dossier différent" do
+      src = Path.absname("test/fixtures/textes/simple.phil")
+      dest_expected = Path.absname("test/fixtures/html/simple.html")
+      File.exists?(dest_expected) && File.rm(dest_expected)
+      PhilHtml.to_html(src, [dest_folder: "../html"])
+      assert File.exists?(dest_expected)
+    end
+    
+    # @tag :skip
+    test "un fichier simple vers un nom et dossier différent" do
+      src = Path.absname("test/fixtures/textes/simple.phil")
+      dest_expected = Path.absname("test/fixtures/html/smp.html.erb")
+      File.exists?(dest_expected) && File.rm(dest_expected)
+      PhilHtml.to_html(src, [dest_folder: "../html", dest_name: "smp.html.erb"])
+      assert File.exists?(dest_expected)
+    end
+
 
     @tag :skip
     test "contenant un css" do

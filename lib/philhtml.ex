@@ -140,6 +140,10 @@ defmodule PhilHtml do
   end
 
   @doc """
+  Retourne une liste contenant le chemin d'accès au fichier .phil, 
+  le chemin d'accès au fichier destination (qui peut être dans un
+  autre dossier et sous un autre nom) et un booléen indiquant s'il
+  faut actualiser le fichier de destination.
 
   @return [:src, :dst, :update]
   """
@@ -148,10 +152,18 @@ defmodule PhilHtml do
     fext    = Path.extname(path) # .phil (ou .html)
     faffix  = Path.basename(path, fext)
     folder  = Path.dirname(path)
+    dest_folder = Keyword.get(phtml.options, :dest_folder, nil)
+    dest_folder = if is_nil(dest_folder) do folder else
+      if File.exists?(dest_folder) do
+        dest_folder
+      else
+        Path.expand(Path.join([folder, dest_folder]))
+      end
+    end
     
     src_path  = Path.join([folder, "#{faffix}.phil"])
     dest_name = Keyword.get(phtml.options, :dest_name, "#{faffix}.html")
-    dst_path  = Path.join([folder, dest_name])
+    dst_path  = Path.join([dest_folder, dest_name])
 
     src_exists = File.exists?(src_path)
     dst_exists = File.exists?(dst_path)
