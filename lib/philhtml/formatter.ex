@@ -874,6 +874,9 @@ defmodule PhilHtml.Formatter do
     iex> treate_simple_formatages("--del--", [])
     "<del>del</del>"
 
+    iex> treate_simple_formatages("\\\\n", [])
+    "<br/>"
+
 
   """
   @reg_gras_ital ~r/\*\*\*(.+)\*\*\*/U  ; @rempl_gras_ital "<strong><em>\\1</em></strong>"
@@ -883,6 +886,7 @@ defmodule PhilHtml.Formatter do
   @reg_superscript ~r/\^(.+)\b/U  ; @remp_superscript "<sup>\\1</sup>"
   @reg_del_ins ~r/\-\-(.+)\|(.+)\-\-/U ; @remp_del_ins "<del>\\1</del> <ins>\\2</ins>"
   @reg_del ~r/\-\-(.+)\-\-/U      ; @remp_del "<del>\\1</del>"
+  @reg_slash_n ~r/\\n/            ; @remp_slash_n "<br/>"
   
   def treate_simple_formatages(content, _options) do
     content
@@ -893,6 +897,7 @@ defmodule PhilHtml.Formatter do
     |> replace_in_string(@reg_superscript , @remp_superscript)
     |> replace_in_string(@reg_del_ins     , @remp_del_ins)
     |> replace_in_string(@reg_del         , @remp_del)
+    |> replace_in_string(@reg_slash_n     , @remp_slash_n)
   end
   defp replace_in_string(str, reg, remp) do
     Regex.replace(reg, str, remp)

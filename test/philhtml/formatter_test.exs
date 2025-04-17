@@ -401,7 +401,7 @@ defmodule PhilHtml.FormaterTest do
 
   describe "fonction dans texte" do
 
-    # @tag :skip
+    @tag :skip
     test "doit être évaluée dans <: ... :>" do
       source = """
       Le nom de l'application est <: app_name() :>.
@@ -412,7 +412,7 @@ defmodule PhilHtml.FormaterTest do
       test_cycle_complet(source, expected)
     end
 
-    # @tag :skip
+    @tag :skip
     test "ne doit pas être évaluée si directement dans texte (sans : devant)" do
         # NB : Avant, on considérait que tout texte se présentant comme
       # une fonction était une fonction. Ça pose un problème avec les
@@ -429,7 +429,7 @@ defmodule PhilHtml.FormaterTest do
       test_cycle_complet(source, expected)
     end
 
-    # @tag :skip
+    @tag :skip
     test "doit être évaluée dans le texte si précédée de « : »" do
       source = """
       il ou elle est :parti(e) sans laisser d'adresse.
@@ -440,7 +440,7 @@ defmodule PhilHtml.FormaterTest do
       test_cycle_complet(source, expected)
     end
 
-    # @tag :skip
+    @tag :skip
     test "si variable inconnue, l'essayer comme fonction sans args" do
       source = """
       <: app_name :> est le nom de l'application.
@@ -451,6 +451,18 @@ defmodule PhilHtml.FormaterTest do
       test_cycle_complet(source, expected)
     end
 
+  end #/describe
+
+
+  # @tag :skip
+  test "Un slash-n est interprété comme un br" do
+    source = """
+    C'est un texte\\nsur deux lignes
+    """
+    expected = """
+    <p>C’est un texte<br/>sur deux lignes</p>
+    """
+    test_cycle_complet(source, expected)
   end
 
 end
