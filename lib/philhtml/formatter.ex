@@ -59,8 +59,8 @@ defmodule PhilHtml.Formatter do
 
   @doc """
   Fonction principale qui formate tout le contenu et retourne le 
-  code html (seuls subsiste les <% ... %> qui seront évalués à la
-  volée)
+  code html (seuls subsiste les <% ... %> ou les <:: ... ::> qui 
+  seront évalués à la volée)
 
   @return {HTMLString} Code html.heex de la page
   """
@@ -68,6 +68,7 @@ defmodule PhilHtml.Formatter do
     %{phtml | heex: do_formate_content(phtml)}
   end
   defp do_formate_content(phtml) do
+    # - Tag par défaut (si non défini) -
     deftag = Keyword.get(phtml.metadata, :default_tag, phtml.options[:default_tag] || "p")
     options = Keyword.merge(phtml.options, [
       metadata: phtml.metadata,

@@ -113,15 +113,24 @@ defmodule PhilHtml.Evaluator do
         is_nil(dmodule) -> 
           ~s(<span class="error">** Unknown function: #{fn_name}/#{Enum.count(StringTo.list(fn_params))}</span>)
         true -> 
-          [module, fn_name, fn_params] = dmodule
-          evaluate_in(module, fn_name, fn_params)
-      end
+          apply(__MODULE__, :evaluate_in, dmodule)
+        end
     end
   end
 
   def evaluate_code_as(:variable, content, options) do
-    if is_empty(options[:variables]) do nil else
-      Keyword.get(options[:variables], String.to_atom(content))
+    res = if is_empty(options[:variables]) do nil else
+      Keyword.get(options[:variables], String.to_atom(content), nil)
+    end
+    case res do
+    nil -> 
+      # Si le code n'a pas été trouvé comme variable, on regarde si
+      # ça n'est pas une fonction sans parenthèses
+      dmodule = module_helper_for?(content, [], options)
+      if is_nil(dmodule) do nil else
+        apply(__MODULE__, :evaluate_in, dmodule)
+      end
+    _ -> res
     end
   end
 
