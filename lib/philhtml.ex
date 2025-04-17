@@ -160,6 +160,8 @@ defmodule PhilHtml do
         Path.expand(Path.join([folder, dest_folder]))
       end
     end
+
+    File.exists?(dest_folder) || raise("Destination Folder unfound: #{dest_folder}")
     
     src_path  = Path.join([folder, "#{faffix}.phil"])
     dest_name = Keyword.get(phtml.options, :dest_name, "#{faffix}.html")
