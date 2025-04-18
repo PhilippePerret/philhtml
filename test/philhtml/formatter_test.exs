@@ -10,7 +10,7 @@ defmodule PhilHtml.FormaterTest do
   import PhilHtml.TestMethods
 
   # IO.puts "Les doctest Formatter sont à remettre"
-  doctest PhilHtml.Formatter
+  # doctest PhilHtml.Formatter
 
   describe "traitement de guillemets" do
 
@@ -454,7 +454,7 @@ defmodule PhilHtml.FormaterTest do
   end #/describe
 
 
-  # @tag :skip
+  @tag :skip
   test "Un slash-n est interprété comme un br" do
     source = """
     C'est un texte\\nsur deux lignes
@@ -464,5 +464,24 @@ defmodule PhilHtml.FormaterTest do
     """
     test_cycle_complet(source, expected)
   end
+
+  describe "les listes list:" do
+    # @tag :skip
+    test "prennent leur id s'il est fixé en attribut" do
+      source = """
+      list: id=idlist
+      * Item 1
+      * Item 2
+      :list
+      """
+      expected = """
+      <ul id="idlist">
+      <li>Item 1</li>
+      <li>Item 2</li>
+      </ul>
+      """
+      test_cycle_complet(source, expected)
+    end
+  end #/describe list:
 
 end

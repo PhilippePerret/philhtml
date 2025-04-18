@@ -208,7 +208,7 @@ defmodule PhilHtml.Formatter do
   # Pour repérer les différents blocs :list, on s'appuie sur l'inden-
   # tation
   def formate_section(:list, section, options) do
-    # IO.inspect(section, label: "\nSECTION dans :list")
+    IO.inspect(section, label: "\nSECTION dans :list")
 
     type_list = String.match?((section.params||""), ~r/\bnumbered\b/) && "ol" || "ul"
 
@@ -220,6 +220,24 @@ defmodule PhilHtml.Formatter do
     opts_item_simple = options
     |> Keyword.put(:no_header, true)
     |> Keyword.put(:no_phil_amorce, true)
+
+    # Attributs à mettre dans la balise
+    # On garder seulement les attr=value
+    attrs = if is_nil(section.params) || section.params == "" do "" else
+      section.params
+      |> String.trim()
+      |> String.split(" ")
+      |> Enum.filter(fn seg ->
+        Regex.match?(~r/=/, seg)
+      end)
+      |> Enum.map(fn seg ->
+        [attr, value] = String.split(seg, "=")
+        ~s(#{attr}="#{value}")
+      end)
+      |> Enum.join(" ")
+      |> String.trim()
+    end
+    attrs = if attrs == "", do: "", else: " #{attrs}"
 
     section.content
     |> Str.wrap_into("\n", "")
@@ -263,7 +281,7 @@ defmodule PhilHtml.Formatter do
       |> Str.wrap_into("<li>", "</li>")
     end)
     |> Enum.join("\n")
-    |> Str.wrap_into("<#{type_list}>", "</#{type_list}>")
+    |> Str.wrap_into("<#{type_list}#{attrs}>", "</#{type_list}>")
   end
 
 

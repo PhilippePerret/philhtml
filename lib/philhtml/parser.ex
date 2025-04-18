@@ -124,7 +124,7 @@ defmodule PhilHtml.Parser do
           # Par exemple pour le code entre backstick ou le code à
           # évaluer
           ["", code] 
-        end
+        end |> IO.inspect(label: "params et code")
         section = {type, String.trim(code), String.trim(params)}
         %{
           content: String.replace(collector.content, tout, "LIHP#{Enum.count(collector.sections)}SEP"),
