@@ -22,10 +22,20 @@ defmodule PhilHtml.Parser do
   """
   def parse(phtml) when is_struct(phtml, PhilHtml) do
     phtml
-    |> split_front_matter()
-    |> front_matter_to_metadata()
+    |> pre_parse()
     |> Compiler.pre_compile(:remove_comments)
     |> explode_phil_content()
+  end
+
+  @doc """
+  Pour pouvoir rapidement voir si un 'folder' est défini dans le
+  frontmatter, qui devra être utilisé pour les inclusions, par la
+  methode Compiler.pre_compile(phtml, :inclusions)
+  """
+  def pre_parse(phtml) when is_struct(phtml, PhilHtml) do
+    phtml
+    |> split_front_matter()
+    |> front_matter_to_metadata()
   end
 
   def split_front_matter(phtml) when is_struct(phtml, PhilHtml) do

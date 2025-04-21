@@ -5,6 +5,9 @@ defmodule PhilHtml.Compiler do
 
   Ça doit se faire juste avant l'évaluation.
   """
+
+  alias PhilHtml.Parser
+
   # require UsefullMethods
   import UsefullMethods
 
@@ -19,16 +22,22 @@ defmodule PhilHtml.Compiler do
   Principalement, cette fonction permet d'inclure les textes à
   inclure définis par [pre/]include(...)
   """
+  # Cette première ne fait rien pour le moment
   def pre_compile(phtml, :first) when is_struct(phtml, PhilHtml) do
     phtml
   end
   
   def pre_compile(phtml, :inclusions) when is_struct(phtml, PhilHtml) do
+    # On regarde si le fichier principal ne défini pas un dossier
+    # pour ses inclusions.
+    phtml = Parser.pre_parse(phtml)
+    metadata = phtml.metadata
+
     phtml = 
     Regex.scan(@reg_pre_include, phtml.raw_content)
     |> Enum.reduce(phtml, fn [tout, relpath], phtml ->
       relpath = String.trim(relpath)
-      fullpath = maybe_fullpath(relpath, phtml)
+      fullpath = maybe_fullpath(relpath, metadata)
       rempl = cond do
         File.exists?(relpath) -> File.read!(relpath)
         fullpath && File.exists?(fullpath) -> File.read!(fullpath)
@@ -69,9 +78,9 @@ defmodule PhilHtml.Compiler do
     %{phtml | raw_content: content}
   end
   
-  defp maybe_fullpath(relpath, phtml) do
-    if phtml.metadata[:folder] do
-      Path.join([phtml.metadata[:folder], relpath])
+  defp maybe_fullpath(relpath, metadata) do
+    if metadata[:folder] do
+      Path.join([metadata[:folder], relpath])
     else 
       nil 
     end

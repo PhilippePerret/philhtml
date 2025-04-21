@@ -88,12 +88,17 @@ defmodule PhilHtml do
 
   def to_html(phtml) when is_struct(phtml, PhilHtml) do
     # IO.puts "-> to_html avec un phtml"
-    phtml 
+    phtml = phtml 
     |> Formatter.formate()
     # |> IO.inspect(label: "[to_html(%PhilHtml{})] Après formate/1")
     |> Evaluator.evaluate_on_render() # ne touche pas :html si options.evaluation est False
     # |> IO.inspect(label: "[to_html(%PhilHtml{})] Après evaluate_on_render/1")
-    |> Map.get(:html)
+    
+    if Keyword.get(phtml.options, :to_data, false) do
+      phtml
+    else
+      Map.get(phtml, :html)
+    end
     # |> IO.inspect(label: "[to_html(%PhilHtml{})] Après get(:html)")
   end
 
@@ -145,7 +150,7 @@ defmodule PhilHtml do
     phtml = phtml
     |> treate_path()
     |> load_or_formate_path()
-    |> IO.inspect(label: "\n+++ phtml après load_or_formate")
+    # |> IO.inspect(label: "\n+++ phtml après load_or_formate")
     |> Evaluator.evaluate_on_render()
     # |> IO.inspect(label: "\n+++ phtml après evaluate_on_render")
     

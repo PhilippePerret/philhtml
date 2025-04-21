@@ -116,7 +116,7 @@ defmodule PhilHtmlTest do
       src = Path.absname("test/fixtures/textes/simple.phil")
       dest = Path.absname("test/fixtures/textes/simple.html")
       res = PhilHtml.to_data(src, [no_file: true])
-      |> IO.inspect(label: "Retour to_data")
+      # |> IO.inspect(label: "Retour to_data")
       
       assert(is_struct(res, PhilHtml), "Le retour de to_data devrait être une structure PhilHtml")
       assert(!File.exists?(dest), "Le fichier destination #{dest} ne devrait pas exister")
@@ -126,7 +126,7 @@ defmodule PhilHtmlTest do
     test "et un appel à to_data/2 avec un fichier avec front-matter" do
       src = Path.absname("test/fixtures/textes/avec_frontmatter.phil")
       res = PhilHtml.to_data(src, [no_file: true, variables: [pseudo: "Pilou"]])
-      |> IO.inspect(label: "Retour to_data")
+      # |> IO.inspect(label: "Retour to_data")
 
       assert(is_struct(res, PhilHtml), "Le retour devrait être une structure PhilHtml")
 
@@ -141,8 +141,16 @@ defmodule PhilHtmlTest do
     test "contenant un javascript" do
     end
 
-    @tag :skip
+    # @tag :skip
     test "contenant des includes définis en path relatifs" do
+      # Il y a un problème particulier, ici, c'est que le fichier 
+      # dans les metadata 'folder', dont nous avons besoin pour 
+      # inclure les fichiers, mais l'inclusion se passe avant le
+      # découpage des fichiers. Pour pallier ce problème, on peut
+      # exceptionnellement, lire rapidement le frontmatter sans 
+      # rien toucher du fichier encore. On ne peut pas inverser
+      # les méthodes, sinon on ne pourrait pas ajouter de frontmatter
+      # de cette manière-là.
       source = Path.absname("./test/fixtures/textes/avec_inclusions_in_folder.phil")
       expected = """
       <p>Je suis un fichier très simple.</p>
