@@ -215,7 +215,7 @@ defmodule PhilHtml.Formatter do
   # Pour repérer les différents blocs :list, on s'appuie sur l'inden-
   # tation
   def formate_section(:list, section, options) do
-    IO.inspect(section, label: "\nSECTION dans :list")
+    # IO.inspect(section, label: "\nSECTION dans :list")
 
     type_list = String.match?((section.params||""), ~r/\bnumbered\b/) && "ol" || "ul"
 

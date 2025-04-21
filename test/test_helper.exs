@@ -58,8 +58,8 @@ defmodule PhilHtml.TestMethods do
     options = 
     if options[:no_helpers] do options else
       if Keyword.has_key?(options, :helpers) do
-        if Enum.member?(options.helpers, HelperDeTest) do options else
-          Keyword.put(options, :helpers, options.helpers ++ [HelperDeTest])
+        if Enum.member?(options[:helpers], HelperDeTest) do options else
+          Keyword.put(options, :helpers, options[:helpers] ++ [HelperDeTest])
         end
       else
         Keyword.put(options, :helpers, [HelperDeTest])
