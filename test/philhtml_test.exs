@@ -85,7 +85,7 @@ defmodule PhilHtmlTest do
       assert(actual =~ expected)
     end
 
-    # @tag :skip
+    @tag :skip
     test "un fichier simple vers un nom différent" do
       src = Path.absname("test/fixtures/textes/simple.phil")
       dest_expected = Path.absname("test/fixtures/textes/smp.html.heex")
@@ -93,7 +93,7 @@ defmodule PhilHtmlTest do
       PhilHtml.to_html(src, [dest_name: "smp.html.heex"])
       assert File.exists?(dest_expected)
     end
-    # @tag :skip
+    @tag :skip
     test "un fichier simple vers un dossier différent" do
       src = Path.absname("test/fixtures/textes/simple.phil")
       dest_expected = Path.absname("test/fixtures/html/simple.html")
@@ -102,13 +102,34 @@ defmodule PhilHtmlTest do
       assert File.exists?(dest_expected)
     end
     
-    # @tag :skip
+    @tag :skip
     test "un fichier simple vers un nom et dossier différent" do
       src = Path.absname("test/fixtures/textes/simple.phil")
       dest_expected = Path.absname("test/fixtures/html/smp.html.erb")
       File.exists?(dest_expected) && File.rm(dest_expected)
       PhilHtml.to_html(src, [dest_folder: "../html", dest_name: "smp.html.erb"])
       assert File.exists?(dest_expected)
+    end
+
+    @tag :skip
+    test "et un appel à to_data/2 pour obtenir les données mais pas de fichier" do
+      src = Path.absname("test/fixtures/textes/simple.phil")
+      dest = Path.absname("test/fixtures/textes/simple.html")
+      res = PhilHtml.to_data(src, [no_file: true])
+      |> IO.inspect(label: "Retour to_data")
+      
+      assert(is_struct(res, PhilHtml), "Le retour de to_data devrait être une structure PhilHtml")
+      assert(!File.exists?(dest), "Le fichier destination #{dest} ne devrait pas exister")
+    end
+    
+    # @tag :skip
+    test "et un appel à to_data/2 avec un fichier avec front-matter" do
+      src = Path.absname("test/fixtures/textes/avec_frontmatter.phil")
+      res = PhilHtml.to_data(src, [no_file: true, variables: [pseudo: "Pilou"]])
+      |> IO.inspect(label: "Retour to_data")
+
+      assert(is_struct(res, PhilHtml), "Le retour devrait être une structure PhilHtml")
+
     end
 
 

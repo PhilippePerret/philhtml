@@ -98,6 +98,23 @@ defmodule PhilHtml do
   end
 
   @doc """
+  Fonction publique qui retourne les données c'est-à-dire la structure
+  PhilHtml du fichier traité.
+
+  Note : ajouter l'option no_file: true pour que le fichier destinatioin
+  ne soit pas construit.
+  """
+  def to_data(foo, options) when is_binary(foo) and is_list(options) do
+    to_html(foo, Keyword.merge(options, [
+      to_data: true,
+      force: true,
+      no_header: true # on devrait pouvoir le changer
+      ]) 
+    )
+    # to_html(foo, options |> Keyword.put(:no_file, true)) |> Keyword.put(:to_data, true)
+  end
+
+  @doc """
   Pour obtenir le code HEEX du fichier (qui doit donc être interprété
   après par l'application)
 
@@ -119,17 +136,24 @@ defmodule PhilHtml do
   @params {String} philpath Le chemin d'accès, .phil ou .html
   @params {Wordlist} options Des options
 
-  @return {HTMLString} Le code à afficher
+  @return {HTMLString|Map} Le code à afficher ou la map phtml si options
+          contient :to_data
   """
   def file_to_html(phtml)  when is_struct(phtml, PhilHtml) do
+    options = phtml.options
     # IO.puts "-> PhilHtml.to_html(#{inspect phtml})"
-    phtml
+    phtml = phtml
     |> treate_path()
     |> load_or_formate_path()
-    # |> IO.inspect(label: "\n+++ phtml après load_or_formate")
+    |> IO.inspect(label: "\n+++ phtml après load_or_formate")
     |> Evaluator.evaluate_on_render()
     # |> IO.inspect(label: "\n+++ phtml après evaluate_on_render")
-    |> Map.get(:html)
+    
+    if options[:to_data] do
+      phtml
+    else
+      Map.get(phtml, :html)
+    end
   end
 
   def file_to_html(philpath) when is_binary(philpath) do
@@ -167,6 +191,13 @@ defmodule PhilHtml do
     dest_name = Keyword.get(phtml.options, :dest_name, "#{faffix}.html")
     dst_path  = Path.join([dest_folder, dest_name])
 
+    # Avec l'option :force, on doit forcer l'actualisation du fichier
+    # donc le détruire s'il existe pour metre :update_required ci-
+    # dessous à True
+    if Keyword.get(phtml.options, :force, false) do
+      File.exists?(dst_path) && File.rm(dst_path)
+    end
+
     src_exists = File.exists?(src_path)
     dst_exists = File.exists?(dst_path)
 
@@ -187,16 +218,11 @@ defmodule PhilHtml do
   def load_or_formate_path(phtml) when is_struct(phtml, PhilHtml) do
     # IO.inspect(phtml, label: "Dans load_or_formate_path")
     if phtml.file[:require_update] do
-      case Formatter.formate_file(phtml) do
-      :ok -> true
-      {:error, erreur} -> 
-        %{ phtml | errors: phtml.errors ++ erreur}
-        raise erreur # pour le moment
-      end
+      Formatter.formate_file(phtml)
+    else 
+      phtml 
     end
-    %{ phtml | heex: File.read!(phtml.file[:dst]) }
   end
-
 
   defp mtime(path) do
     File.lstat!(path).mtime

@@ -8,16 +8,6 @@ defmodule PhilHtml.Formatter do
   @return {PhilHtml}
   @public
   """
-  # Cette fonction sert à formater complètement un simple string
-  # qui peut contenir n'importe quoi, et notamment des blocs. Elle
-  # a été affinée pour traiter le contenu des listes (dont les items
-  # peuvent contenir n'importe quoi.)
-  # Ajouter l'option [no_header: true] pour ne pas ajouter les
-  # css/js et la balise méta du charset.
-  def formate(philcode, options) when is_binary(philcode) do
-    formate(%PhilHtml{raw_content: philcode, options: options})
-  end
-  
   def formate(phtml) when is_struct(phtml, PhilHtml) do
     # IO.inspect(phtml.options, label: "[formate] phtml.options")
     phtml
@@ -32,29 +22,46 @@ defmodule PhilHtml.Formatter do
     |> Compiler.post_compile()
   end
 
+  # Cette fonction sert à formater complètement un simple string
+  # qui peut contenir n'importe quoi, et notamment des blocs. Elle
+  # a été affinée pour traiter le contenu des listes (dont les items
+  # peuvent contenir n'importe quoi.)
+  # Ajouter l'option [no_header: true] pour ne pas ajouter les
+  # css/js et la balise méta du charset.
+  def formate(philcode, options) when is_binary(philcode) do
+    formate(%PhilHtml{raw_content: philcode, options: options})
+  end
+  
   @doc """
   Fonction de formatage principal quand un fichier est fourni.
-  @return :ok si tout s'est bien passé et {:error, erreur} en cas de
-  problème.
+  @return {PhilHtml} phtml La structure
   """
   def formate_file(phtml) when is_struct(phtml, PhilHtml) do
     # IO.inspect(phtml, label: "\n\n[formate_file] PHTML")
     phtml = %{phtml | raw_content: File.read!(phtml.file[:src])}
     phtml = formate(phtml)
-    # TODO
-    # Mais en fait, ci-dessous, ça n'est pas une 
-    # question d'évaluation mais du fait que le code doit être 
-    # enregistré dans un fichier.
-    # Cf. les deux utilisations différentes de l'extension
-    #               
+    # |> IO.inspect(label: "Dans formate_file")
     no_evaluation = Keyword.get(phtml.options, :evaluation, true) === false
-    code_final = if no_evaluation do
-      phtml = Evaluator.evaluate_on_render(phtml)
-      phtml.html
+    code_final = 
+      if no_evaluation do
+        phtml.heex
+      else
+        phtml = Evaluator.evaluate_on_render(phtml)
+        phtml.html
+      end
+
+    # IO.inspect(code_final, label: "\n\nCode final")
+
+    if phtml.options[:no_file] do
+      %{phtml | html: code_final}
     else
-      phtml.heex
+      case File.write(phtml.file[:dst], code_final) do
+      :ok -> phtml
+      {:error, erreur} -> 
+        %{ phtml | errors: phtml.errors ++ erreur}
+        raise erreur # pour le moment
+      end
     end
-    File.write(phtml.file[:dst], code_final)
   end
 
   @doc """
