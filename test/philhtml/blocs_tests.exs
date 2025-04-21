@@ -1,6 +1,8 @@
 defmodule PhilHtml.BlocsTests do
   use ExUnit.Case
 
+  import PhilHtml.TestMethods
+
   describe "un bloc de code" do
     
     @tag :skip
@@ -11,13 +13,11 @@ defmodule PhilHtml.BlocsTests do
       :code
       """
       expected = """
-      <meta charset=\"utf-8\">
       <pre class="as_doc"><code>
       Un code qui doit apparaitre comme du code.
       </code></pre>
       """
-      actual = PhilHtml.to_html(source)
-      assert(actual == expected |> String.trim() )
+      test_cycle_complet(source, expected)
     end
 
     @tag :skip
@@ -35,7 +35,6 @@ defmodule PhilHtml.BlocsTests do
       :code
       """
       expected = """
-      <meta charset=\"utf-8\">
       <pre><code>
       Pour voir
          Des espace avant
@@ -47,8 +46,7 @@ defmodule PhilHtml.BlocsTests do
       être supprimés
       </code></pre>
       """
-      actual = PhilHtml.to_html(source)
-      assert(actual == String.trim(expected))
+      test_cycle_complet(source, expected)
     end
   end
 end
