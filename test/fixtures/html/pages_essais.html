@@ -1,0 +1,111 @@
+<!--
+  Cette page permet de faire des essais sur les pages et les
+  paragraphes.
+-->
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Essais pages</title>
+  <script src="https://unpkg.com/pagedjs/dist/paged.polyfill.js"></script>
+  <style type="text/css">
+    @page {
+      size: 8.5in 11in;
+      font-size: 14pt;
+      text-align: justify;
+      margin: 2cm;
+      @top-right {
+        font-family: sans-serif;
+        font-weight: bold;
+        font-size: 2em;
+        content: counter(page);
+      };
+      counter-reset: paragraph;
+    }
+    @page :first {
+      color: red;
+    }
+
+    p.parag {
+      position:relative;
+      margin-left: 1.6em;
+      counter-increment: paragraph;
+    }
+    p.parag:before {
+      position:absolute;
+      left: -3em;
+      top: 3px;
+      content: counter(page) ":" counter(paragraph);
+      font-size: 9pt;
+      font-family: Monospace;
+    }
+
+  </style>
+</head>
+<body>
+  <p class="parag">Nullam varius, turpis et commodo pharetra, est eros bibendum elit, nec luctus magna felis sollicitudin mauris. Ut ullamcorper, ligula eu tempor congue, eros est euismod turpis, id tincidunt sapien risus a quam. Nullam varius, turpis et commodo pharetra, est eros bibendum elit, nec luctus magna felis sollicitudin mauris.</p>
+  <p class="parag">Maecenas fermentum consequat mi. Aliquam faucibus, elit ut dictum aliquet, felis nisl adipiscing sapien, sed malesuada diam lacus eget erat. Aliquam faucibus, elit ut dictum aliquet, felis nisl adipiscing sapien, sed malesuada diam lacus eget erat. Nulla gravida orci a odio.</p>
+  <p class="parag">Maecenas fermentum consequat mi. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Duis sapien sem, aliquet nec, commodo eget, consequat quis, neque.</p>
+  <p class="parag">Duis ac tellus et risus vulputate vehicula. Nullam arcu. Integer in mauris eu nibh euismod gravida. Donec fermentum. Duis ac tellus et risus vulputate vehicula.</p>
+  <p class="parag">Etiam tempor. Donec fermentum. Duis sapien sem, aliquet nec, commodo eget, consequat quis, neque. Duis sapien sem, aliquet nec, commodo eget, consequat quis, neque.</p>
+  <p class="parag">Nullam arcu. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Cras mollis scelerisque nunc.</p>
+  <p class="parag">Curabitur pretium tincidunt lacus. Aliquam faucibus, elit ut dictum aliquet, felis nisl adipiscing sapien, sed malesuada diam lacus eget erat. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam varius, turpis et commodo pharetra, est eros bibendum elit, nec luctus magna felis sollicitudin mauris.</p>
+  <p class="parag">Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.</p>
+  <p class="parag">Nulla gravida orci a odio. Ut ullamcorper, ligula eu tempor congue, eros est euismod turpis, id tincidunt sapien risus a quam. Duis sapien sem, aliquet nec, commodo eget, consequat quis, neque. Duis ac tellus et risus vulputate vehicula.</p>
+  <p class="parag">Cras mollis scelerisque nunc. Etiam tempor. Nullam varius, turpis et commodo pharetra, est eros bibendum elit, nec luctus magna felis sollicitudin mauris. Maecenas fermentum consequat mi. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.</p>
+  <p class="parag">Ut ullamcorper, ligula eu tempor congue, eros est euismod turpis, id tincidunt sapien risus a quam. Integer in mauris eu nibh euismod gravida. Donec lobortis risus a elit. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Cras mollis scelerisque nunc.</p>
+  <p class="parag">Integer in mauris eu nibh euismod gravida. Aliquam faucibus, elit ut dictum aliquet, felis nisl adipiscing sapien, sed malesuada diam lacus eget erat. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Pellentesque malesuada nulla a mi. Maecenas fermentum consequat mi. Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+  <p class="parag">Maecenas fermentum consequat mi. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut ullamcorper, ligula eu tempor congue, eros est euismod turpis, id tincidunt sapien risus a quam.</p>
+  <p class="parag">Nullam varius, turpis et commodo pharetra, est eros bibendum elit, nec luctus magna felis sollicitudin mauris. Aliquam faucibus, elit ut dictum aliquet, felis nisl adipiscing sapien, sed malesuada diam lacus eget erat. Curabitur pretium tincidunt lacus. Nulla gravida orci a odio. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+  <p class="parag">Duis sapien sem, aliquet nec, commodo eget, consequat quis, neque. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Nullam arcu. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam varius, turpis et commodo pharetra, est eros bibendum elit, nec luctus magna felis sollicitudin mauris.</p>
+  <p class="parag">Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Ut ullamcorper, ligula eu tempor congue, eros est euismod turpis, id tincidunt sapien risus a quam. Nulla gravida orci a odio. Duis ac tellus et risus vulputate vehicula. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Aliquam faucibus, elit ut dictum aliquet, felis nisl adipiscing sapien, sed malesuada diam lacus eget erat.</p>
+  <p class="parag">Pellentesque malesuada nulla a mi. Nulla gravida orci a odio. Nulla gravida orci a odio. Donec lobortis risus a elit. Nullam arcu. Donec fermentum.</p>
+  <p class="parag">Curabitur pretium tincidunt lacus. Cras mollis scelerisque nunc. Cras mollis scelerisque nunc. Donec lobortis risus a elit.</p>
+  <p class="parag">Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Etiam tempor. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Donec fermentum. Donec lobortis risus a elit. Nullam arcu.</p>
+  <p class="parag">Duis sapien sem, aliquet nec, commodo eget, consequat quis, neque. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis ac tellus et risus vulputate vehicula. Cras mollis scelerisque nunc. Integer in mauris eu nibh euismod gravida. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+  <p class="parag">Duis ac tellus et risus vulputate vehicula. Cras mollis scelerisque nunc. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Nullam varius, turpis et commodo pharetra, est eros bibendum elit, nec luctus magna felis sollicitudin mauris. Nullam varius, turpis et commodo pharetra, est eros bibendum elit, nec luctus magna felis sollicitudin mauris.</p>
+  <p class="parag">Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Ut ullamcorper, ligula eu tempor congue, eros est euismod turpis, id tincidunt sapien risus a quam. Aliquam faucibus, elit ut dictum aliquet, felis nisl adipiscing sapien, sed malesuada diam lacus eget erat.</p>
+  <p class="parag">Maecenas fermentum consequat mi. Integer in mauris eu nibh euismod gravida. Nullam arcu. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam faucibus, elit ut dictum aliquet, felis nisl adipiscing sapien, sed malesuada diam lacus eget erat. Duis sapien sem, aliquet nec, commodo eget, consequat quis, neque.</p>
+  <p class="parag">Nullam arcu. Duis sapien sem, aliquet nec, commodo eget, consequat quis, neque. Aliquam faucibus, elit ut dictum aliquet, felis nisl adipiscing sapien, sed malesuada diam lacus eget erat. Maecenas fermentum consequat mi.</p>
+  <p class="parag">Integer in mauris eu nibh euismod gravida. Cras mollis scelerisque nunc. Duis sapien sem, aliquet nec, commodo eget, consequat quis, neque. Curabitur pretium tincidunt lacus. Maecenas fermentum consequat mi. Ut ullamcorper, ligula eu tempor congue, eros est euismod turpis, id tincidunt sapien risus a quam.</p>
+  <p class="parag">Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis ac tellus et risus vulputate vehicula. Duis ac tellus et risus vulputate vehicula. Duis sapien sem, aliquet nec, commodo eget, consequat quis, neque. Nulla gravida orci a odio.</p>
+  <p class="parag">Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Pellentesque malesuada nulla a mi. Cras mollis scelerisque nunc.</p>
+  <p class="parag">Curabitur pretium tincidunt lacus. Integer in mauris eu nibh euismod gravida. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Nulla gravida orci a odio.</p>
+  <p class="parag">Pellentesque malesuada nulla a mi. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Pellentesque malesuada nulla a mi. Aliquam faucibus, elit ut dictum aliquet, felis nisl adipiscing sapien, sed malesuada diam lacus eget erat.</p>
+  <p class="parag">Pellentesque malesuada nulla a mi. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Donec fermentum. Cras mollis scelerisque nunc. Cras mollis scelerisque nunc. Pellentesque malesuada nulla a mi.</p>
+  <p class="parag">Integer in mauris eu nibh euismod gravida. Cras mollis scelerisque nunc. Donec lobortis risus a elit. Pellentesque malesuada nulla a mi. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Ut ullamcorper, ligula eu tempor congue, eros est euismod turpis, id tincidunt sapien risus a quam.</p>
+  <p class="parag">Curabitur pretium tincidunt lacus. Curabitur pretium tincidunt lacus. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Ut ullamcorper, ligula eu tempor congue, eros est euismod turpis, id tincidunt sapien risus a quam. Curabitur pretium tincidunt lacus.</p>
+  <p class="parag">Donec lobortis risus a elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque malesuada nulla a mi. Donec fermentum. Curabitur pretium tincidunt lacus.</p>
+  <p class="parag">Ut ullamcorper, ligula eu tempor congue, eros est euismod turpis, id tincidunt sapien risus a quam. Maecenas fermentum consequat mi. Donec fermentum. Curabitur pretium tincidunt lacus. Cras mollis scelerisque nunc. Ut ullamcorper, ligula eu tempor congue, eros est euismod turpis, id tincidunt sapien risus a quam.</p>
+  <p class="parag">Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Nulla gravida orci a odio. Aliquam faucibus, elit ut dictum aliquet, felis nisl adipiscing sapien, sed malesuada diam lacus eget erat. Integer in mauris eu nibh euismod gravida.</p>
+  <p class="parag">Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Pellentesque malesuada nulla a mi. Cras mollis scelerisque nunc.</p>
+  <p class="parag">Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Donec lobortis risus a elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Maecenas fermentum consequat mi.</p>
+  <p class="parag">Etiam tempor. Nullam varius, turpis et commodo pharetra, est eros bibendum elit, nec luctus magna felis sollicitudin mauris. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Maecenas fermentum consequat mi. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+  <p class="parag">Cras mollis scelerisque nunc. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Curabitur pretium tincidunt lacus. Aliquam faucibus, elit ut dictum aliquet, felis nisl adipiscing sapien, sed malesuada diam lacus eget erat.</p>
+  <p class="parag">Duis ac tellus et risus vulputate vehicula. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Pellentesque malesuada nulla a mi. Donec lobortis risus a elit.</p>
+  <p class="parag">Nullam arcu. Duis sapien sem, aliquet nec, commodo eget, consequat quis, neque. Integer in mauris eu nibh euismod gravida. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+  <p class="parag">Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Donec lobortis risus a elit. Donec fermentum.</p>
+  <p class="parag">Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Duis sapien sem, aliquet nec, commodo eget, consequat quis, neque. Donec fermentum. Donec lobortis risus a elit.</p>
+  <p class="parag">Donec fermentum. Ut ullamcorper, ligula eu tempor congue, eros est euismod turpis, id tincidunt sapien risus a quam. Nullam arcu. Nullam varius, turpis et commodo pharetra, est eros bibendum elit, nec luctus magna felis sollicitudin mauris.</p>
+  <p class="parag">Nulla gravida orci a odio. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Maecenas fermentum consequat mi.</p>
+  <p class="parag">Etiam tempor. Nullam arcu. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Nullam varius, turpis et commodo pharetra, est eros bibendum elit, nec luctus magna felis sollicitudin mauris.</p>
+  <p class="parag">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Cras mollis scelerisque nunc. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Nulla gravida orci a odio.</p>
+  <p class="parag">Ut ullamcorper, ligula eu tempor congue, eros est euismod turpis, id tincidunt sapien risus a quam. Maecenas fermentum consequat mi. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Cras mollis scelerisque nunc. Duis sapien sem, aliquet nec, commodo eget, consequat quis, neque. Pellentesque malesuada nulla a mi.</p>
+  <p class="parag">Pellentesque malesuada nulla a mi. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Donec fermentum.</p>
+  <p class="parag">Maecenas fermentum consequat mi. Donec fermentum. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Pellentesque malesuada nulla a mi.</p>
+  <p class="parag">Curabitur pretium tincidunt lacus. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Curabitur pretium tincidunt lacus.</p>
+  <p class="parag">Maecenas fermentum consequat mi. Donec lobortis risus a elit. Duis ac tellus et risus vulputate vehicula. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Maecenas fermentum consequat mi.</p>
+  <p class="parag">Cras mollis scelerisque nunc. Integer in mauris eu nibh euismod gravida. Donec lobortis risus a elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+  <p class="parag">Maecenas fermentum consequat mi. Ut ullamcorper, ligula eu tempor congue, eros est euismod turpis, id tincidunt sapien risus a quam. Etiam tempor. Nullam arcu. Ut ullamcorper, ligula eu tempor congue, eros est euismod turpis, id tincidunt sapien risus a quam. Ut ullamcorper, ligula eu tempor congue, eros est euismod turpis, id tincidunt sapien risus a quam.</p>
+  <p class="parag">Nulla gravida orci a odio. Pellentesque malesuada nulla a mi. Maecenas fermentum consequat mi. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+  <p class="parag">Ut ullamcorper, ligula eu tempor congue, eros est euismod turpis, id tincidunt sapien risus a quam. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer in mauris eu nibh euismod gravida. Nullam arcu.</p>
+  <p class="parag">Aliquam faucibus, elit ut dictum aliquet, felis nisl adipiscing sapien, sed malesuada diam lacus eget erat. Duis sapien sem, aliquet nec, commodo eget, consequat quis, neque. Maecenas fermentum consequat mi. Pellentesque malesuada nulla a mi. Duis ac tellus et risus vulputate vehicula. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+  <p class="parag">Donec lobortis risus a elit. Integer in mauris eu nibh euismod gravida. Donec lobortis risus a elit. Duis ac tellus et risus vulputate vehicula.</p>
+  <p class="parag">Etiam tempor. Curabitur pretium tincidunt lacus. Pellentesque malesuada nulla a mi. Curabitur pretium tincidunt lacus. Nullam varius, turpis et commodo pharetra, est eros bibendum elit, nec luctus magna felis sollicitudin mauris.</p>
+  <p class="parag">Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Donec fermentum. Donec lobortis risus a elit.</p>
+  <p class="parag">Etiam tempor. Maecenas fermentum consequat mi. Cras mollis scelerisque nunc. Aliquam faucibus, elit ut dictum aliquet, felis nisl adipiscing sapien, sed malesuada diam lacus eget erat.</p>
+  <p class="parag">Integer in mauris eu nibh euismod gravida. Duis sapien sem, aliquet nec, commodo eget, consequat quis, neque. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.</p>
+  <p class="parag">Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Curabitur pretium tincidunt lacus. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.</p>
+</body>
+</html>
