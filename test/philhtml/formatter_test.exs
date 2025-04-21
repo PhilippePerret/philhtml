@@ -10,7 +10,7 @@ defmodule PhilHtml.FormaterTest do
   import PhilHtml.TestMethods
 
   # IO.puts "Les doctest Formatter sont à remettre"
-  # doctest PhilHtml.Formatter
+  doctest PhilHtml.Formatter
 
   describe "traitement de guillemets" do
 
