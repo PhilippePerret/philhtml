@@ -33,4 +33,42 @@ defmodule PhilHtml.PhilFormatterTest do
     end
   end
 
+  describe "les variables" do
+    @tag :skip
+    test "passées aux fonctions par atom peuvent être des variables d'entête" do
+      source = """
+      ---
+      mavar = Marion
+      ---
+      <: mafun(:mavar) :>
+      """
+      expected = """
+      <p>Bonjour Marion.</p>
+      """
+      test_cycle_complet(source, expected)
+    end
+
+    @tag :skip
+    test "passées aux fonctions par atom peuvent être des variables fournies" do
+      source = """
+      <: mafun(:mavar) :>
+      """
+      expected = """
+      <p>Bonjour Élie.</p>
+      """
+      test_cycle_complet(source, expected, [variables: [mavar: "Élie"]])
+    end
+
+    @tag :skip
+    test "passées aux fonctions sans être des variables sont gardées telles quelles" do
+      source = """
+      <: mafun(:marion_variable) :>
+      """
+      expected = """
+      <p>Bonjour marion_variable.</p>
+      """
+      test_cycle_complet(source, expected)
+    end
+
+  end #/describe "les variables"
 end

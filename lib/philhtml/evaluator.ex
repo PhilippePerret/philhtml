@@ -144,14 +144,33 @@ defmodule PhilHtml.Evaluator do
 
 
 
-  def evaluate_in(module, fn_name, fn_params) when is_binary(fn_name) do
-    evaluate_in(module, String.to_atom(fn_name), fn_params)
+  def evaluate_in(module, fn_name, fn_params, options) when is_binary(fn_name) do
+    evaluate_in(module, String.to_atom(fn_name), fn_params, options)
   end
-  def evaluate_in(module, fn_name, fn_params) when is_binary(fn_params) do
-    evaluate_in(module, fn_name, StringTo.list(fn_params))
+  def evaluate_in(module, fn_name, fn_params, options) when is_binary(fn_params) do
+    evaluate_in(module, fn_name, StringTo.list(fn_params), options)
   end
-  def evaluate_in(module, fn_name, fn_params) do
+  def evaluate_in(module, fn_name, fn_params, options) do
+    fn_params = rationnalize_function_params(fn_params, options)
     apply(module, fn_name, fn_params)
+  end
+
+  def rationnalize_function_params(fn_params, options) do
+    # IO.inspect(fn_params, label: "Params")
+    # IO.inspect(options, label: "\nOptions avec Params")
+    fn_params
+    |> Enum.map(fn param ->
+      cond do
+        is_atom(param) and Keyword.has_key?(options[:variables], param) ->
+          Keyword.get(options[:variables], param)
+        is_atom(param) ->
+          # Ça pourrait être une fonction d'un des modules, sans arguments
+          param
+        true -> 
+          param
+      end
+    end)
+    # |> IO.inspect(label: "Nouveaux paramètres")
   end
 
 
@@ -192,7 +211,7 @@ defmodule PhilHtml.Evaluator do
         end
       end)
     |> Enum.map(fn module ->
-      [module, fn_name, fn_params]
+      [module, fn_name, fn_params, options]
     end)
     |> Enum.at(0, nil)
     # |> IO.inspect(label: "MODULE CHOISI POUR #{fn_name}")

@@ -26,4 +26,8 @@ defmodule HelperDeTest do
     "parti#{lettre}"
   end
 
+  def mafun(prenom) do
+    "Bonjour #{prenom}."
+  end
+
 end

@@ -367,14 +367,12 @@ defmodule PhilHtml.Formatter do
         nil -> 
           arity = StringTo.list(fn_params) |> Enum.count()
           ~s(<span class="error">Unknown function `#{fn_name}/#{arity}'</span>)
-        tout -> 
-          [module, fn_name, fn_params] = tout
-          Evaluator.evaluate_in(module, fn_name, fn_params)
+        dmodule -> 
+          apply(Evaluator, :evaluate_in, dmodule)
       end
       String.replace(accu, tout, rempl)
     end)
   end
-
 
 
   @regex_guillemets ~r/(?:(^| | )")(.+)(?:"( | |$))/U ; @rempl_guillemets "\\1« \\2 »\\3"

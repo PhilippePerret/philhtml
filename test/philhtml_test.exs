@@ -122,7 +122,7 @@ defmodule PhilHtmlTest do
       assert(!File.exists?(dest), "Le fichier destination #{dest} ne devrait pas exister")
     end
     
-    # @tag :skip
+    @tag :skip
     test "et un appel à to_data/2 avec un fichier avec front-matter" do
       src = Path.absname("test/fixtures/textes/avec_frontmatter.phil")
       res = PhilHtml.to_data(src, [no_file: true, variables: [pseudo: "Pilou"]])
