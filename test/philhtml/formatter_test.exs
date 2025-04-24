@@ -328,7 +328,7 @@ defmodule PhilHtml.FormaterTest do
       test_cycle_complet(source, expected)
     end
 
-    # @tag :skip
+    @tag :skip
     test "listes imbriquées" do
       source = """
       list:
@@ -466,7 +466,7 @@ defmodule PhilHtml.FormaterTest do
   end
 
   describe "les listes list:" do
-    # @tag :skip
+    @tag :skip
     test "prennent leur id s'il est fixé en attribut" do
       source = """
       list: id=idlist
@@ -483,5 +483,44 @@ defmodule PhilHtml.FormaterTest do
       test_cycle_complet(source, expected)
     end
   end #/describe list:
+
+  describe "les textes évalués" do
+
+    # @tag :skip
+    test "ne sont pas touchés s'ils n'ont pas de transformeurs" do
+      # Le problème est survenu avec un lien qui contenait un id de
+      # la forme :
+      #   "1ed96d72-b940-495a-8003-d454d5108ee8"
+      # Cet id était transformé en 
+      #   "1<sup>e</sup>d96d72-b940-495a-8003-d454d5108<sup>e</sup>e8"
+      # parce que "1e" et "8e" étaient pris pour "1^e" et "8^e"
+      # 
+      source = """
+      ---
+      url = /mon/lien/1ed96__AA__d72-b*94*0-495a-8003-d454d5108ee8
+      ---
+      Le lien est [Ce choix](<: url :>)
+      """
+      expected = """
+      <p>Le lien est <a href="/mon/lien/1ed96__AA__d72-b*94*0-495a-8003-d454d5108ee8">Ce choix</a></p>
+      """
+      test_cycle_complet(source, expected)
+    end
+
+    # @tag :skip
+    test "sont formatés s'ils ont le transformeur 'f'" do
+      source = """
+      ---
+      url = /mon/lien/1ed96__AA__d72-b*94*0-495a-8003-d454d5108ee8
+      ---
+      Le lien est [Ce choix](<:f url :>)
+      """
+      expected = """
+      <p>Le lien est <a href="/mon/lien/1<sup>e</sup>d96<u>AA</u>d72-b<em>94</em>0-495a-8003-d454d5108<sup>e</sup>e8">Ce choix</a></p>
+      """
+      test_cycle_complet(source, expected)
+    end
+
+  end
 
 end

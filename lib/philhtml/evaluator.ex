@@ -15,16 +15,52 @@ defmodule PhilHtml.Evaluator do
   @reg_phil_code_on_render ~r/<\:\:([rfc])?[ \n]+(.+)[ \n]+\:\:>/Ums
   def reg_phil_code_on_render, do: @reg_phil_code_on_render
 
+
+  @doc """
+  @api
+  Fonction publique permettant de détemplatiser le texte.
+
+  L'utilisation typique de cette méthode se fait avec les mails. On
+  a une série de destinataires qui doivent recevoir un mail person-
+  nalisé. Dans un premier temps, on prépare le mail à l'aide de :
+    dataphil = PhilHtml.to_data("/path/to/mail.phil", params...)
+  Ensuite, pour personnaliser les subjets (subject) et les corps
+  de texte (html_body), on les envoie à cette fonction.
+    subject   = PhilHtml.Evaluator.customize(subject, dataphil)
+    htmlbody  = PhilHtml.Evaluator.customize(htmlbody, dataphil)
+  @return
+  """
+  def customize(string, phtml) do
+    phtml = Map.put(phtml, :heex, string)
+    evaluate_on_render(phtml)
+  end
+
+  @doc """
+  Retourne directement le string personnalisé
+  """
+  def customize!(string, phtml) do
+    customize(string, phtml).html
+  end
+
   @doc """
   Evalue le code <: ... :> à la compilation
 
   """
   def evaluate_on_compile(html, options) do
     # IO.inspect(options, label: "OPTIONS DANS evaluate_on_compile")
-    # raise "Pour voir"
     Regex.scan(@reg_phil_code_on_compile, html)
     |> Enum.reduce(html, fn [tout, transformers, content], html ->
       rempl = evaluate_code(content, transformers, options)
+      rempl =
+        if String.match?(transformers, ~r/f/) do
+          # Si c'est du code qui doit être formaté ensuite, il
+          # faut ajouter "<:f "
+          rempl 
+        else
+          # Sinon, le texte sera protégé pour ne pas être
+          # transformé par les corrections normales
+          "PROTECTEDPHHT#{rempl}PHHTPROTECTED"
+        end
       String.replace(html, tout, "#{rempl}")
     end)
   end

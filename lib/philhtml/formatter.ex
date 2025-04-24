@@ -726,7 +726,8 @@ defmodule PhilHtml.Formatter do
   @param {Keyword} options Les options éventuelles
                   Les options importantes ici sont :
                   no_phil_amorce:    Si true, aucune amorce phil par défaut ne sera appliqué
-
+                  Sera également ajouté au cours du processus :
+                  protected_segs:    La table des segments protégés
   @return {String} Le contenu modifié
   """
   def treate_content(content, options) do
@@ -735,9 +736,13 @@ defmodule PhilHtml.Formatter do
     {content, codes_at_render} = Parser.extract_render_evaluations_from(content)
     {content, phil_amorce} = Parser.extract_phil_amorce(content, options)      
     
+    {content, options} = 
+      content
+      |> Evaluator.evaluate_on_compile(options)
+      |> evaluate_helpers_functions(options)
+      |> met_de_cote_protected_segs(options)
+
     content
-    |> Evaluator.evaluate_on_compile(options)
-    |> evaluate_helpers_functions(options)
     # À partir d'ici on formate/corrige vraiment le texte
     |> formate_smart_guillemets(options)
     |> pose_balises_nowrap(options) # Attention : [N1]
@@ -747,8 +752,43 @@ defmodule PhilHtml.Formatter do
     # |> IO.inspect(label: "Avant traitement des amorces phil (phil_amorce: #{inspect phil_amorce})")
     |> apply_phil_amorce(phil_amorce, options)
     # |> IO.inspect(label: "APRÈS traitement des amorces phil")
+    |> restore_protected_segs(options)
     |> Parser.restore_render_evaluations(codes_at_render)
     # |> IO.inspect(label: "\n[Treate_content] Texte final")
+  end
+
+  @doc """
+  Fonction qui met les segments textuels qui sont entre PROTECTEDPHHT
+  et PHHTPROTECTED de côté pour ne pas les corriger et pouvoir les 
+  remettre à la fin (avec restore_protected_segs/2).
+  """
+  @reg_protected_segs ~r/PROTECTEDPHHT(.+)PHHTPROTECTED/Um
+  def met_de_cote_protected_segs(content, options) do
+    protected_segs = 
+      Regex.scan(@reg_protected_segs, content)
+      |> Enum.reduce(%{segs: [], content: content}, fn [tout, seg], coll ->
+        balise = "PTDSG#{Enum.count(coll.segs)}GSDTP"
+        Map.merge(coll, %{
+          content:  String.replace(coll.content, tout, balise),
+          segs:     coll.segs ++ [seg]
+        })
+      end)
+    
+    options = Keyword.put(options, :protected_segs, protected_segs.segs)
+    {protected_segs.content, options}
+  end
+  @doc """
+  Remet en place les segments protégés après le traitement/formatage
+  des textes.
+  """
+  def restore_protected_segs(content, options) do
+    protected_segs = 
+    options[:protected_segs]
+    |> Enum.with_index()
+    |> Enum.reduce(content, fn {seg, index}, str ->
+      balise = "PTDSG#{index}GSDTP"
+      String.replace(str, balise, seg)
+    end)
   end
 
   @doc """
