@@ -80,6 +80,15 @@ defmodule PhilHtml.Evaluator do
     options = phtml.options
     phtml = %{phtml | html: phtml.heex}
     no_evaluation = Keyword.get(options, :evaluation, true) === false
+
+    # TODO il faudrait mettre un verrou pour ne pas pouvoir avoir phtml.heex
+    # nil
+    phtml =
+    if is_nil(phtml.heex) do
+      %{phtml | heex: ""}
+    else
+      phtml
+    end
     
     Regex.scan(@reg_phil_code_on_render, phtml.heex)
     |> Enum.reduce(phtml, fn [tout, transformers, content], phtml ->

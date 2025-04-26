@@ -1,7 +1,7 @@
 defmodule PhilHtml.EvaluatorTest do
   use ExUnit.Case
 
-  alias PhilHtml.Evaluator
+  import PhilHtml.TestMethods
 
   doctest PhilHtml.Evaluator
 
@@ -10,58 +10,52 @@ defmodule PhilHtml.EvaluatorTest do
     @tag :skip
     test "code simple en ligne à évaluer comme code elixir à la compilation" do
       source = "<: 2 + 3 :>"
-      expected = "5"
-      actual = Evaluator.evaluate_on_compile(source, [])
-      assert(actual == expected)
+      expected = "<p>5</p>"
+      test_cycle_complet(source, expected)
     end
 
     @tag :skip
     test "code simple en ligne à évaluer comme code elixir avec des variables" do
-      source    = "<: 2 + vari :>"
-      expected  = "9"
-      actual = Evaluator.evaluate_on_compile(source, [variables: [vari: 7]])
-      assert(actual == expected)
+      source    = """
+      ---
+      vari = 7
+      ---
+      <: 2 + vari :>
+      """
+      expected  = "<p>9</p>"
+      test_cycle_complet(source, expected)
     end
 
     @tag :skip
     test "code simple en bloc à évaluer à la compilation" do
       source = """
-      <:
-      2 + 3
-      :>
+      <: 2 + 3 :>
       """
-      |> String.trim()
-      expected = "5"
-      actual = Evaluator.evaluate_on_compile(source, [])
-      assert(actual == expected |> String.trim())
+      expected = "<p>5</p>"
+      test_cycle_complet(source, expected)
     end
 
     @tag :skip
     test "code de variable en ligne à évaluer à la compilation" do
       source = "<: mavariable :>"
-      actual = Evaluator.evaluate_on_compile(source, [variables: [mavariable: "Une variable pour voir"]])
-      expected = "Une variable pour voir"
-      assert(actual == expected)
+      expected = "<p>Une variable pour voir</p>"
+      test_cycle_complet(source, expected, [variables: [mavariable: "Une variable pour voir"]])
     end
 
     @tag :skip
     test "code d'helper personnalisé, en ligne, à évaluer à la compilation" do
       source    = "<: monhelper() :>"
-      expected  = "Retour de mon helper"
-      actual    = Evaluator.evaluate_on_compile(source, [helpers: [HelperDeTest]])
-      assert(actual == expected)
+      expected  = "<p>Retour de mon helper</p>"
+      test_cycle_complet(source, expected, [helpers: [HelperDeTest]])
     end
 
     @tag :skip
     test "code d'helper personnalisé, en bloc, à évaluer à la compilation" do
-      source    = """
-      <:
-      monhelper()
-      :>
-      """ |> String.trim()
-      expected  = "Retour de mon helper"
-      actual    = Evaluator.evaluate_on_compile(source, [helpers: [HelperDeTest]])
-      assert(actual == expected)
+      source = """
+      <: monhelper :>
+      """
+      expected = "<p>Retour de mon helper</p>"
+      test_cycle_complet(source, expected, [helpers: [HelperDeTest]])
     end
 
 

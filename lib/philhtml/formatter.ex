@@ -782,7 +782,6 @@ defmodule PhilHtml.Formatter do
   des textes.
   """
   def restore_protected_segs(content, options) do
-    protected_segs = 
     options[:protected_segs]
     |> Enum.with_index()
     |> Enum.reduce(content, fn {seg, index}, str ->
