@@ -111,6 +111,22 @@ defmodule PhilHtmlTest do
       assert File.exists?(dest_expected)
     end
 
+    # @tag :skip
+    test "un fichier .html à jour retourne le bon code" do
+      src   = Path.absname("test/fixtures/textes/simple.phil")
+      dest  = Path.absname("test/fixtures/textes/simple.html")
+      File.exists?(dest) && File.rm(dest)
+      assert !File.exists?(dest)
+      # On commence par le faire pour qu'il soit actualisé
+      res_on_build = PhilHtml.to_html(src)
+      assert(File.exists?(dest), "le fichier .html devrait avoir été construit")
+      assert(PhilHtml.File.after?(dest, src), "le fichier .phil devrait avoir été modifié après…")
+      # --- Test ---
+      res = PhilHtml.to_html(src)
+      # --- Vérification ---
+      assert(res == res_on_build)
+    end
+
     @tag :skip
     test "et un appel à to_data/2 pour obtenir les données mais pas de fichier" do
       src = Path.absname("test/fixtures/textes/simple.phil")
@@ -164,7 +180,8 @@ defmodule PhilHtmlTest do
       remove_html_of_phil(source)
       test_cycle_complet(source, expected)
     end
-  end
+
+  end # describe "avec des fichiers"
 
   def remove_html_of_phil(philpath) do
     affx = Path.basename(philpath, Path.extname(philpath))

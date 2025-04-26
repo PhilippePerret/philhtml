@@ -220,12 +220,18 @@ defmodule PhilHtml do
     %{phtml | file: dfile}
   end
 
+  @doc """
+  Fonction qui formate le texte d'un fichier (si ce formatage n'a pas
+  encore été effectué) ou qui charge simplement sa version formatée
+  """
   def load_or_formate_path(phtml) when is_struct(phtml, PhilHtml) do
     # IO.inspect(phtml, label: "Dans load_or_formate_path")
     if phtml.file[:require_update] do
       Formatter.formate_file(phtml)
     else 
-      phtml 
+      # On charge la version pré-formatée (qui devra encore être
+      # évaluée au rendu)
+      %{phtml | heex: File.read!(phtml.file[:dst])}
     end
   end
 
