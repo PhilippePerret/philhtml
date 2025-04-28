@@ -207,7 +207,7 @@ defmodule PhilHtml.Compiler do
 
   def compile_css(phtml) do
     meta = phtml.metadata
-    css = [common_css_path()] ++ (Keyword.get(meta, :css, []))
+    css = [common_css_path()] ++ (Map.get(meta, :css, []))
     cond do
       is_binary(css)  -> [css]
       is_list(css)    -> Enum.reverse(css)
@@ -244,7 +244,7 @@ defmodule PhilHtml.Compiler do
 
   def compile_javascript(phtml) do
     meta = phtml.metadata
-    if (js = Keyword.get(meta, :javascript, nil)) do
+    if (js = Map.get(meta, :javascript, nil)) do
       cond do
         is_binary(js) -> [js]
         is_list(js)   -> js

@@ -141,7 +141,7 @@ defmodule PhilHtmlTest do
     @tag :skip
     test "et un appel à to_data/2 avec un fichier avec front-matter" do
       src = Path.absname("test/fixtures/textes/avec_frontmatter.phil")
-      res = PhilHtml.to_data(src, [no_file: true, variables: [pseudo: "Pilou"]])
+      res = PhilHtml.to_data(src, [no_file: true, variables: %{pseudo: "Pilou"}])
       # |> IO.inspect(label: "Retour to_data")
 
       assert(is_struct(res, PhilHtml), "Le retour devrait être une structure PhilHtml")

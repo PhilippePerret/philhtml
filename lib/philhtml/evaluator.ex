@@ -180,14 +180,11 @@ defmodule PhilHtml.Evaluator do
   end
 
   def evaluate_code_as(:elixir, content, options) do
-    # IO.inspect(content, label: "Contenu elixir à évaluer")
-    # IO.inspect(options, label: "\nOptions")
-    {result, _variables} = Code.eval_string(content, options[:variables])
+    # IO.inspect(content, label: "\nContenu elixir à évaluer")
+    # IO.inspect(options[:kw_variables], label: "\nAvec les kw_variables")
+    {result, _variables} = Code.eval_string(content, options[:kw_variables])
     result
   end
-
-
-
 
   def evaluate_in(module, fn_name, fn_params, options) when is_binary(fn_name) do
     evaluate_in(module, String.to_atom(fn_name), fn_params, options)

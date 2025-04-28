@@ -56,7 +56,7 @@ defmodule PhilHtml.PhilFormatterTest do
       expected = """
       <p>Bonjour Élie.</p>
       """
-      test_cycle_complet(source, expected, [variables: [mavar: "Élie"]])
+      test_cycle_complet(source, expected, [variables: %{mavar: "Élie"}])
     end
 
     @tag :skip

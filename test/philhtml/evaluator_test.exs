@@ -39,7 +39,7 @@ defmodule PhilHtml.EvaluatorTest do
     test "code de variable en ligne à évaluer à la compilation" do
       source = "<: mavariable :>"
       expected = "<p>Une variable pour voir</p>"
-      test_cycle_complet(source, expected, [variables: [mavariable: "Une variable pour voir"]])
+      test_cycle_complet(source, expected, [variables: %{mavariable: "Une variable pour voir"}])
     end
 
     @tag :skip

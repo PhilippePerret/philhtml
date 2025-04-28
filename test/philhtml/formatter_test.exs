@@ -296,7 +296,7 @@ defmodule PhilHtml.FormaterTest do
       test_cycle_complet(source, expected)
     end
 
-    @tag :skip
+    # @tag :skip
     test "les corrections sont faites à l'intérieur" do
       source = """
       ---

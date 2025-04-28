@@ -16,6 +16,7 @@ defmodule PhilHtml.Formatter do
     |> Compiler.treate_smart_phil_marks()
     |> Parser.parse()
     # |> IO.inspect(label: "\n\n[formate(phtml)] APRÈS PARSE")
+    |> keyword_variables_for_eval()
     |> formate_content()
     # |> IO.inspect(label: "\n\n[formate(phtml)] APRÈS formate_content")
     |> formate_toc_if_required()
@@ -76,7 +77,7 @@ defmodule PhilHtml.Formatter do
   end
   defp do_formate_content(phtml) do
     # - Tag par défaut (si non défini) -
-    deftag = Keyword.get(phtml.metadata, :default_tag, phtml.options[:default_tag] || "p")
+    deftag = Map.get(phtml.metadata, :default_tag, phtml.options[:default_tag] || "p")
     options = Keyword.merge(phtml.options, [
       metadata: phtml.metadata,
       default_tag: deftag
@@ -1086,4 +1087,16 @@ defmodule PhilHtml.Formatter do
     end
   end
 
+  # Pour les méthodes string_eval et compagnie, on a besoin d'un 
+  # Keyword en binding. Or, les variables sont sous forme de Map. Il
+  # faut donc les transformer en les mettant dans :kw_variables
+  defp keyword_variables_for_eval(phtml) do
+    kw_variables = 
+      Keyword.get(phtml.options, :variables, %{})
+      |> Enum.map(fn {key, value} ->
+        {key, value}
+      end)
+    options = Keyword.put(phtml.options, :kw_variables, kw_variables)
+    %{phtml | options: options}
+  end
 end

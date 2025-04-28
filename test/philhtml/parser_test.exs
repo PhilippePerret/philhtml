@@ -147,9 +147,9 @@ defmodule PhilHtml.ParseTest do
     expected = [
       {:string, "Un texte.", []}
     ]
-    metadata = [
-      {:mavariable, "Ma valeur"}
-    ]
+    metadata = %{
+      mavariable: "Ma valeur"
+    }
     test_parsing(source, expected, metadata)    
   end
 

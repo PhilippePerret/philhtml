@@ -73,7 +73,7 @@ defmodule PhilHtml.Parser do
       end)
     end
     options = phtml.options
-    variables = Map.merge!(options[:variables] || %{}, metadata)
+    variables = Map.merge(options[:variables] || %{}, metadata)
     options = Keyword.put(options, :variables, variables)
     Map.merge(phtml, %{metadata: metadata, options: options})
   end
