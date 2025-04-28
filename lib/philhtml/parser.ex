@@ -57,20 +57,24 @@ defmodule PhilHtml.Parser do
     end
   end
 
+  @doc """
+  Ajoute les données du front-matter dans les variables
+  """
   def front_matter_to_metadata(phtml) when is_struct(phtml, PhilHtml) do
     metadata =
     if is_nil(phtml.frontmatter) do
-      []
+      %{}
     else
       String.trim(phtml.frontmatter)
       |> String.split("\n")
-      |> Enum.map(fn line -> 
+      |> Enum.reduce(%{}, fn line, map -> 
         [var, value] = String.split(line, "=") |> Enum.map(fn s -> String.trim(s) end)
-        {String.to_atom(var), StringTo.value(value)}
+        Map.put(map, String.to_atom(var), StringTo.value(value))
       end)
     end
     options = phtml.options
-    options = Keyword.put(options, :variables, (options[:variables] || []) ++ metadata)
+    variables = Map.merge!(options[:variables] || %{}, metadata)
+    options = Keyword.put(options, :variables, variables)
     Map.merge(phtml, %{metadata: metadata, options: options})
   end
 

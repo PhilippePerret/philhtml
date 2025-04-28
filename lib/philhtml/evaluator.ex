@@ -132,7 +132,7 @@ defmodule PhilHtml.Evaluator do
       if options[:variables] do 
         options 
       else
-        Keyword.put(options, :variables, [])
+        Keyword.put(options, :variables, %{})
       end
     # IO.inspect(content, label: "\nContenu à évaluer…")
     # IO.inspect(options, label: "\navec les options…")
@@ -165,7 +165,7 @@ defmodule PhilHtml.Evaluator do
 
   def evaluate_code_as(:variable, content, options) do
     res = if is_empty(options[:variables]) do nil else
-      Keyword.get(options[:variables], String.to_atom(content), nil)
+      Map.get(options[:variables], String.to_atom(content), nil)
     end
     case res do
     nil -> 
@@ -206,8 +206,8 @@ defmodule PhilHtml.Evaluator do
     fn_params
     |> Enum.map(fn param ->
       cond do
-        is_atom(param) and Keyword.has_key?(options[:variables], param) ->
-          Keyword.get(options[:variables], param)
+        is_atom(param) and Map.has_key?(options[:variables], param) ->
+          Map.get(options[:variables], param)
         is_atom(param) ->
           # Ça pourrait être une fonction d'un des modules, sans arguments
           param

@@ -21,6 +21,8 @@ defmodule PhilHtml do
   Les options, envoyées en second argument des fonctions :to_html et
   :to_heex, peuvent définir :
 
+    variables:      {Map} Table des variables utilisables dans le 
+                    code.
     no_header:      Si True, l'entête CSS/JS ne sera pas ajoutée
                     Default: False
     dest_name:      Nom du fichier final s'il doit être différent de
@@ -139,7 +141,7 @@ defmodule PhilHtml do
   Convertit le path +phil_path+ en pur HTML et le retourne pour affichage.
   
   @params {String} philpath Le chemin d'accès, .phil ou .html
-  @params {Wordlist} options Des options
+  @params {Keyword} options Des options
 
   @return {HTMLString|Map} Le code à afficher ou la map phtml si options
           contient :to_data
