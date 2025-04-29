@@ -118,7 +118,6 @@ defmodule PhilHtml do
       no_header: true # on devrait pouvoir le changer
       ]) 
     )
-    # to_html(foo, options |> Keyword.put(:no_file, true)) |> Keyword.put(:to_data, true)
   end
 
   @doc """

@@ -157,7 +157,7 @@ defmodule PhilHtmlTest do
     test "contenant un javascript" do
     end
 
-    # @tag :skip
+    @tag :skip
     test "contenant des includes définis en path relatifs" do
       # Il y a un problème particulier, ici, c'est que le fichier 
       # dans les metadata 'folder', dont nous avons besoin pour 

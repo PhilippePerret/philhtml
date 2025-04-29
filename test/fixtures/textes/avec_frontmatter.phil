@@ -1,5 +1,6 @@
 ---
 subject = L'objet du mail
+projet = Un projet simple
 ---
 Bonjour <: pseudo :>,
 C'est fichier *PhilHtml* utilisé pour un mail.
