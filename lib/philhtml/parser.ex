@@ -66,10 +66,19 @@ defmodule PhilHtml.Parser do
       %{}
     else
       String.trim(phtml.frontmatter)
-      |> String.split("\n")
-      |> Enum.reduce(%{}, fn line, map -> 
-        [var, value] = String.split(line, "=") |> Enum.map(fn s -> String.trim(s) end)
-        Map.put(map, String.to_atom(var), StringTo.value(value))
+      |> String.split("\n", [trim: true])
+      |> Enum.reduce(%{}, fn line, map ->
+        line = String.trim(line)
+        cond do
+        line == "" -> map
+        String.starts_with?(line, "#") -> map
+        String.match?(line, ~r/.+\=.+/) ->
+          [var, value] = String.split(line, "=") |> Enum.map(fn s -> String.trim(s) end)
+          Map.put(map, String.to_atom(var), StringTo.value(value))
+        true -> 
+          # TODO Traiter ligne inconnue
+          map
+        end
       end)
     end
     options = phtml.options

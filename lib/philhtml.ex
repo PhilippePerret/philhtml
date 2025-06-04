@@ -39,6 +39,10 @@ defmodule PhilHtml do
     folder:         Chemin d'accès au dossier de l'application, mais 
                     il est défini par PhilHtml, il ne doit pas être
                     défini manuellement.
+
+    dest_folder:    Le nom du dossier, dans :folder, dans lequel il faut
+                    exporter les fichiers générés. Ou le chemin 
+                    absolu pour les mettre tout autre part
   """
 
   defstruct [

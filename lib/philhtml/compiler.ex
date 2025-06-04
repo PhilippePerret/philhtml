@@ -191,12 +191,16 @@ defmodule PhilHtml.Compiler do
 
   def traite_fichiers_css(phtml) do
     # IO.puts "\n-> traite_fichiers_css"
-    if phtml.options[:no_header] do phtml else
+    if phtml.options[:no_header] do 
+      phtml 
+    else
       compile_css(phtml)
     end
   end
   def traite_fichiers_javascript(phtml) do
-    if phtml.options[:no_header] do phtml else
+    if phtml.options[:no_header] do 
+      phtml 
+    else
       compile_javascript(phtml)
     end
   end
@@ -287,12 +291,16 @@ defmodule PhilHtml.Compiler do
   res UTF8
   """
   def put_in_full_code_or_meta_charset(phtml) do
-    if phtml.options[:no_header] do phtml else
+    if phtml.options[:no_header] do 
+      phtml 
+    else
       options = phtml.options
       options =
       if phtml.metadata[:full_code] do
         Keyword.put(options, :full_code, true)
-      else options end
+      else 
+        options 
+      end
       heex =
       if options[:full_code] do
         """
